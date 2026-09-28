@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Alam Indah Selaras — Blok D</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2F5233">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Alam Indah Selaras">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
+<style>
+:root{
+  --bg:#F5F6F0; --card:#FFFFFF; --ink:#1E271F; --muted:#6C7566; --line:#E2E5DA;
+  --primary:#2F5233; --primary-ink:#EFF4EC; --gold:#B0812F; --terra:#A8462F; --info:#3D6B8C;
+  --paid:#2F5233; --unpaid:#B0812F; --serif:'Fraunces',Georgia,serif; --sans:'Inter',-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  --kosong-bg:#6C7566; --belum-bg:#ECEEE4;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg:#141812; --card:#1C221A; --ink:#EDEFE8; --muted:#9AA391; --line:#2B3327; --primary:#7FAE83; --primary-ink:#12190F; --kosong-bg:#3E463D; --belum-bg:#20261D; }
+}
+:root[data-theme="dark"]{ --bg:#141812; --card:#1C221A; --ink:#EDEFE8; --muted:#9AA391; --line:#2B3327; --primary:#7FAE83; --primary-ink:#12190F; --kosong-bg:#3E463D; --belum-bg:#20261D; }
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+h1,h2,h3,.brand{font-family:var(--serif);}
+.hide{display:none!important;}
+
+/* ---------- LOGIN ---------- */
+#login{min-height:100%;display:flex;align-items:center;justify-content:center;padding:32px 20px;}
+.login-card{max-width:340px;width:100%;text-align:center;}
+.login-card .mark{width:56px;height:56px;border-radius:16px;background:var(--primary);color:var(--primary-ink);display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 16px;}
+.login-card h1{font-size:22px;margin:0 0 2px;font-weight:600;}
+.login-card p{color:var(--muted);font-size:13px;margin:0 0 22px;}
+.role-pick{display:flex;gap:8px;margin-bottom:16px;}
+.role-pick button{flex:1;padding:11px 8px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:13px;cursor:pointer;font-family:var(--sans);}
+.role-pick button.sel{border-color:var(--primary);background:var(--primary);color:var(--primary-ink);font-weight:600;}
+.field{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font-size:14px;margin-bottom:10px;font-family:var(--sans);}
+.btn-primary{width:100%;padding:12px;border:none;border-radius:10px;background:var(--primary);color:var(--primary-ink);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans);}
+.login-foot{margin-top:16px;font-size:11px;color:var(--muted);}
+
+/* ---------- APP SHELL ---------- */
+#app header{position:sticky;top:env(safe-area-inset-top,0px);background:var(--card);border-bottom:1px solid var(--line);padding:14px 18px;z-index:10;display:flex;align-items:center;gap:10px;}
+.mark-sm{width:34px;height:34px;border-radius:9px;background:var(--primary);color:var(--primary-ink);display:flex;align-items:center;justify-content:center;font-size:16px;flex:0 0 auto;}
+#app header .t h1{font-size:15px;margin:0;line-height:1.2;font-weight:600;}
+#app header .t p{font-size:11px;color:var(--muted);margin:1px 0 0;}
+#roleTag{margin-left:auto;font-size:10px;background:var(--line);color:var(--muted);padding:4px 9px;border-radius:20px;white-space:nowrap;}
+
+main{padding:16px 16px 90px;max-width:640px;margin:0 auto;}
+.tab{display:none;} .tab.active{display:block;}
+.section-title{font-size:13px;color:var(--muted);margin:22px 0 10px;font-weight:600;}
+.section-title:first-child{margin-top:0;}
+
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px;}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;}
+.stat b{display:block;font-size:21px;font-weight:600;} .stat span{font-size:11px;color:var(--muted);}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;}
+.card h2{font-size:14px;margin:0 0 12px;font-weight:600;}
+.item{padding:10px 0;border-bottom:1px solid var(--line);}
+.item:last-child{border-bottom:none;padding-bottom:0;}
+.item:first-child{padding-top:0;}
+.item .meta{font-size:11px;color:var(--muted);margin-top:2px;}
+.empty{color:var(--muted);font-size:13px;text-align:center;padding:18px 0;}
+
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:center;font-size:10px;color:var(--muted);font-weight:600;padding-bottom:8px;}
+th:first-child{text-align:left;}
+td{padding:9px 4px;border-top:1px solid var(--line);text-align:center;}
+td:first-child{text-align:left;}
+.who{font-weight:600;} .who small{display:block;font-weight:400;color:var(--muted);}
+.pill{display:inline-block;width:34px;height:22px;border-radius:20px;font-size:10px;line-height:22px;color:#fff;cursor:pointer;border:none;font-weight:600;}
+.p-lunas{background:var(--paid);} .p-belum{background:var(--unpaid);} .p-off{background:var(--line);color:var(--muted);cursor:default;}
+
+.segmented{display:flex;background:var(--line);border-radius:10px;padding:3px;margin-bottom:14px;}
+.segmented button{flex:1;border:none;background:transparent;padding:8px 3px;border-radius:8px;font-size:11px;color:var(--muted);cursor:pointer;font-family:var(--sans);font-weight:600;}
+.segmented button.sel{background:var(--card);color:var(--ink);}
+
+.grid-rumah{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px;}
+.rumah{border-radius:10px;padding:10px 2px;text-align:center;font-size:9.5px;font-weight:700;color:#fff;}
+.r-dihuni{background:var(--primary);} .r-kosong{background:var(--kosong-bg);} .r-sewa{background:var(--gold);} .r-kosongpemilik{background:var(--info);}
+.r-belum{background:var(--belum-bg);color:var(--muted);border:1px dashed var(--line);}
+.legend{display:flex;gap:14px;font-size:11px;color:var(--muted);margin-top:10px;flex-wrap:wrap;}
+.legend i{width:9px;height:9px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:middle;}
+
+.profile-row{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
+.avatar{width:48px;height:48px;border-radius:50%;background:var(--primary);color:var(--primary-ink);display:flex;align-items:center;justify-content:center;font-weight:700;font-family:var(--serif);flex:0 0 auto;overflow:hidden;}
+.avatar-lg{width:76px;height:76px;font-size:28px;}
+.avatar img{width:100%;height:100%;object-fit:cover;}
+.contact-row{display:flex;gap:8px;margin:10px 0 4px;}
+.contact-row a,.contact-row button{flex:1;text-decoration:none;text-align:center;padding:10px;border-radius:10px;font-size:12.5px;font-weight:600;font-family:var(--sans);border:none;cursor:pointer;}
+.contact-reject{background:var(--terra);color:#fff;}
+.contact-muted{background:var(--line);color:var(--muted);}
+.contact-call{background:var(--primary);color:var(--primary-ink);}
+.contact-wa{background:#25D366;color:#fff;}
+.setting-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid var(--line);font-size:13px;}
+.setting-row:first-of-type{border-top:none;}
+.switch{width:38px;height:22px;border-radius:20px;background:var(--line);position:relative;cursor:pointer;border:none;flex:0 0 auto;}
+.switch i{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--card);transition:.15s;}
+.switch.on{background:var(--primary);} .switch.on i{left:18px;background:var(--primary-ink);}
+.btn-ghost{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--terra);font-size:13px;font-weight:600;cursor:pointer;margin-top:14px;font-family:var(--sans);}
+
+.note{background:var(--primary-ink);border:1px dashed var(--primary);color:var(--primary);border-radius:10px;padding:10px 12px;font-size:11.5px;margin-bottom:16px;}
+
+.newscard{padding:0;overflow:hidden;}
+.newscard img{width:100%;height:160px;object-fit:cover;display:block;background:var(--line);}
+.newsbody{padding:14px 16px;}
+.newsbody h3{font-size:16px;margin:0 0 4px;line-height:1.3;}
+.newsbody p{font-size:13.5px;line-height:1.65;margin:0;text-align:justify;white-space:pre-line;}
+.ai-badge{display:inline-block;font-size:10px;background:var(--primary-ink);color:var(--primary);padding:2px 8px;border-radius:20px;margin-bottom:8px;}
+.ai-loading{display:block;font-size:11.5px;color:var(--muted);font-style:italic;margin-bottom:6px;}
+
+.vote-row{display:flex;gap:8px;margin-top:10px;}
+.vote-btn{flex:1;padding:8px;border-radius:8px;border:1px solid var(--line);background:transparent;font-size:12px;cursor:pointer;color:var(--muted);font-family:var(--sans);}
+.vote-btn.on.up{background:var(--primary-ink);border-color:var(--primary);color:var(--primary);font-weight:600;}
+.vote-btn.on.down{background:#3a1f1a;border-color:var(--terra);color:#e2a396;font-weight:600;}
+@media not (prefers-color-scheme: dark){ .vote-btn.on.down{background:#FBEAE6;color:var(--terra);} }
+:root[data-theme="light"] .vote-btn.on.down{background:#FBEAE6;color:var(--terra);}
+
+.exp-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--line);cursor:pointer;gap:10px;}
+.exp-item:first-child{border-top:none;}
+.exp-item .amt{color:var(--terra);white-space:nowrap;font-weight:600;font-size:13px;}
+
+.overlay{display:none;position:fixed;inset:0;background:rgba(15,20,14,.5);z-index:60;align-items:flex-end;justify-content:center;}
+.overlay.show{display:flex;}
+.sheet{background:var(--card);width:100%;max-width:520px;border-radius:16px 16px 0 0;padding:18px;max-height:85vh;overflow-y:auto;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));}
+.sheet img{width:100%;border-radius:10px;margin-bottom:10px;}
+.close-x{float:right;background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;}
+
+.denah-scroll{overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:10px;padding:10px;max-height:60vh;}
+.denah-grid{display:grid;grid-template-columns:52px repeat(26,46px);grid-auto-rows:30px;gap:3px;width:max-content;}
+.dg-cell{border:1px solid var(--line);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;cursor:pointer;background:var(--card);color:var(--ink);text-align:center;line-height:1.1;padding:1px;}
+.dg-cell:hover{border-color:var(--primary);filter:brightness(1.06);}
+.dg-dihuni{background:var(--primary);color:#fff;border-color:var(--primary);}
+.dg-sewa{background:var(--gold);color:#fff;border-color:var(--gold);}
+.dg-kosongpemilik{background:var(--info);color:#fff;border-color:var(--info);}
+.dg-kosong{background:var(--kosong-bg);color:#fff;border-color:var(--kosong-bg);}
+.dg-belum{background:var(--belum-bg);color:var(--muted);border:1px dashed var(--line);}
+.dg-fasum,.dg-lap{background:#BFE3C4;color:#1d4d29;border-radius:8px;font-size:9.5px;font-weight:700;text-align:center;line-height:1.2;cursor:default;}
+.dg-pos{background:#F3CBAE;color:#7a3d1c;border-radius:8px;font-size:10px;font-weight:700;cursor:default;}
+
+nav#tabbar{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom,0px);z-index:10;}
+nav#tabbar button{flex:1;background:none;border:none;padding:10px 2px 8px;color:var(--muted);font-size:10px;cursor:pointer;font-family:var(--sans);position:relative;}
+.badge-dot{position:absolute;top:4px;right:22%;background:var(--terra);color:#fff;font-size:9px;min-width:15px;height:15px;border-radius:10px;line-height:15px;padding:0 3px;display:none;}
+nav#tabbar button .ic{display:block;font-size:19px;margin-bottom:2px;}
+nav#tabbar button.active{color:var(--primary);font-weight:600;}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <div class="login-card">
+    <div class="mark">🏡</div>
+    <h1>Alam Indah Selaras</h1>
+    <p>Portal warga &amp; pengurus — Blok D</p>
+    <div class="role-pick">
+      <button id="pickWarga" class="sel">Saya Warga</button>
+      <button id="pickPengurus">Saya Pengurus</button>
+    </div>
+    <input class="field" id="loginUser" autocomplete="username" placeholder="Username (Admin / Warga)">
+    <div style="position:relative">
+      <input class="field" id="loginPass" type="password" autocomplete="current-password" placeholder="Password" style="padding-right:42px">
+      <button type="button" onclick="togglePassVisibility()" aria-label="Lihat password" style="position:absolute;right:2px;top:0;height:100%;width:38px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">👁</button>
+    </div>
+    <input class="field" id="loginRumah" placeholder="Nomor rumah (contoh: D2/12)">
+    <button class="btn-primary" onclick="doLogin()">Masuk</button>
+    <p class="login-foot">Login warga memakai akun unik dari Pengurus · Akun Admin dapat masuk langsung sebagai Pengurus dari pilihan mode apa pun.</p>
+  </div>
+</div>
+
+<div id="app" class="hide">
+<header>
+  <div class="mark-sm">🏡</div>
+  <div class="t"><h1>Alam Indah Selaras</h1><p>Blok D</p></div>
+  <span id="roleTag">Warga</span>
+</header>
+
+<main>
+  <div class="tab active" id="tab-beranda"></div>
+  <div class="tab" id="tab-iuran"></div>
+  <div class="tab" id="tab-info"></div>
+  <div class="tab" id="tab-warga"></div>
+  <div class="tab" id="tab-notif"></div>
+  <div class="tab" id="tab-profil"></div>
+</main>
+
+<nav id="tabbar">
+  <button data-t="beranda" class="active"><span class="ic">🏠</span>Beranda</button>
+  <button data-t="iuran"><span class="ic">🧾</span>Iuran</button>
+  <button data-t="info"><span class="ic">📣</span>Info</button>
+  <button data-t="warga"><span class="ic">🧭</span>Warga</button>
+  <button data-t="notif" id="navNotif" class="hide"><span class="ic">🔔</span>Notifikasi<span class="badge-dot" id="notifDot"></span></button>
+  <button data-t="profil"><span class="ic">👤</span>Profil</button>
+</nav>
+</div>
+
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeSheet()"><div class="sheet" id="sheet"></div></div>
+
+<script>
+/* ---------------- demo data ---------------- */
+const bulan=['Jun','Jul','Ags','Sep'];
+const bulanPendek=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+let berandaYear=new Date().getFullYear();
+let keuangan=[
+];
+let pengumuman=[
+];
+let berita=[];
+let aspirasi=[];
+const uid=()=>Math.random().toString(36).slice(2,9);
+function makeUniqueUsername(no){
+  const base='Warga'+String(no||'').replace(/[^A-Za-z0-9]/g,'');
+  let u=base || 'Warga'; let n=2;
+  while(warga.some(x=>x.akun&&x.akun.username.toLowerCase()===u.toLowerCase())) u=base+n++;
+  return u;
+}
+function makePassword(){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+  let out='AIS-';
+  for(let i=0;i<6;i++) out+=chars[Math.floor(Math.random()*chars.length)];
+  return out;
+}
+function ensureAccounts(){
+  let changed=false;
+  warga.forEach(w=>{
+    if(!w.akun && w.status==='dihuni' && w.nama){
+      w.akun={username:makeUniqueUsername(w.no),password:makePassword(),dibuat:new Date().toISOString().slice(0,10)};
+      changed=true;
+    }
+  });
+  if(changed) saveData();
+}
+
+let warga=[
+];
+let session={name:'',rumah:'',role:'warga'};
+let notifikasi=[
+];
+let theme='auto';
+
+/* ---------------- penyimpanan & helper keamanan V12 ---------------- */
+const STORAGE_KEY='ais_blokd_v3';
+const MAX_IMAGE_BYTES=2*1024*1024;
+function isPengurus(){ return session.role==='pengurus'; }
+function isOwnHouse(no){ return isPengurus() || session.rumah===no; }
+function applyTheme(){
+  document.documentElement.dataset.theme=theme==='dark'?'dark':theme==='light'?'light':'';
+}
+function saveData(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({keuangan,pengumuman,berita,aspirasi,warga,notifikasi,pengurusList,theme,version:12}));
+    return true;
+  }catch(e){
+    console.warn('Data belum tersimpan:',e);
+    alert('Penyimpanan penuh. Kurangi ukuran foto/dokumen atau hapus data lama.');
+    return false;
+  }
+}
+function loadData(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY) || localStorage.getItem('ais_blokd_v2');
+    if(!raw){applyTheme();return;}
+    const d=JSON.parse(raw);
+    if(Array.isArray(d.keuangan))keuangan=d.keuangan;
+    if(Array.isArray(d.pengumuman))pengumuman=d.pengumuman;
+    if(Array.isArray(d.berita))berita=d.berita;
+    if(Array.isArray(d.aspirasi))aspirasi=d.aspirasi;
+    if(Array.isArray(d.warga))warga=d.warga;
+    if(Array.isArray(d.notifikasi))notifikasi=d.notifikasi;
+    if(Array.isArray(d.pengurusList)){
+      // Gabungkan data tersimpan dengan daftar jabatan baku (jaga-jaga ada jabatan baru di versi mendatang)
+      d.pengurusList.forEach(saved=>{const p=pengurusList.find(x=>x.id===saved.id); if(p) Object.assign(p,saved);});
+    }
+    if(d.theme)theme=d.theme;
+    // Migrasi voting lama: status vote tidak lagi disimpan di a.my.
+    aspirasi.forEach(a=>{ if(!a.votes)a.votes={}; delete a.my; });
+    notifikasi.forEach(n=>{ if(n.type==='bayar' && n.hasil===null){ const w=warga.find(x=>x.no===n.rumah); const idx=w&&Array.isArray(w.iuran)?bulan.indexOf(n.bulan):-1; if(w&&idx>-1&&w.iuran[idx]==='belum')w.iuran[idx]='menunggu'; }});
+    applyTheme();
+  }catch(e){ console.warn('Data lokal tidak dapat dibaca:',e); }
+}
+loadData();
+ensureAccounts();
+
+/* ---------------- login ---------------- */
+document.getElementById('pickWarga').onclick=()=>selRole('warga');
+document.getElementById('pickPengurus').onclick=()=>selRole('pengurus');
+function selRole(r){session.role=r;document.getElementById('pickWarga').classList.toggle('sel',r==='warga');document.getElementById('pickPengurus').classList.toggle('sel',r==='pengurus');}
+function togglePassVisibility(){
+  const f=document.getElementById('loginPass');
+  const btn=event.currentTarget;
+  const show=f.type==='password';
+  f.type=show?'text':'password';
+  btn.textContent=show?'🙈':'👁';
+}
+function doLogin(){
+  const user=document.getElementById('loginUser').value.trim();
+  const pass=document.getElementById('loginPass').value.trim();
+  const rumah=document.getElementById('loginRumah').value.trim().toUpperCase();
+  if(!user || !pass){ alert('Username dan password wajib diisi.'); return; }
+
+  // MASTER ADMIN = bypass pilihan mode login.
+  // Admin selalu masuk sebagai Pengurus, baik tombol "Saya Warga" maupun
+  // "Saya Pengurus" yang sedang terpilih, dan nomor rumah boleh kosong/diisi.
+  const u=user.normalize('NFKC').trim().toLowerCase();
+  const p=pass.normalize('NFKC').trim();
+  const isMasterAdmin=(u==='admin' && p.toUpperCase()==='AIS2026');
+
+  if(isMasterAdmin){
+    session={name:'Administrator Pengurus',rumah:'',role:'pengurus'};
+  } else if(session.role==='pengurus'){
+    alert('Username atau password pengurus salah. Gunakan akun Admin.'); return;
+  } else {
+    ensureAccounts();
+    const w=warga.find(x=>x.akun && String(x.akun.username||'').normalize('NFKC').trim().toLowerCase()===u && String(x.akun.password||'').normalize('NFKC').trim()===p);
+    if(!w){ alert('Username atau password warga salah. Minta Pengurus melihat atau reset akun warga kamu.'); return; }
+    session.name=w.nama || ('Warga '+w.no); session.rumah=w.no; session.role='warga';
+  }
+  document.getElementById('login').classList.add('hide');
+  document.getElementById('app').classList.remove('hide');
+  document.getElementById('roleTag').textContent=session.role==='pengurus'?'Pengurus':'Warga';
+  document.getElementById('navNotif').classList.toggle('hide',session.role!=='pengurus');
+  renderAll();
+}
+
+/* ---------------- nav ---------------- */
+document.getElementById('tabbar').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  document.querySelectorAll('#tabbar button').forEach(x=>x.classList.toggle('active',x===b));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.id==='tab-'+b.dataset.t));
+});
+
+const fmtRp=n=>'Rp '+Number(n).toLocaleString('id-ID');
+const esc=s=>(s??'').toString().replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
+async function readFile(file){
+  if(!file||!file.size)return '';
+  if(file.size>MAX_IMAGE_BYTES){ alert('Ukuran gambar maksimal 2 MB.'); return ''; }
+  if(!file.type.startsWith('image/')){ alert('File harus berupa gambar.'); return ''; }
+  return new Promise(resolve=>{
+    const r=new FileReader();
+    r.onload=()=>{
+      const img=new Image();
+      img.onload=()=>{
+        const max=1400, scale=Math.min(1,max/Math.max(img.width,img.height));
+        const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(img.width*scale)); c.height=Math.max(1,Math.round(img.height*scale));
+        const ctx=c.getContext('2d'); ctx.drawImage(img,0,0,c.width,c.height);
+        resolve(c.toDataURL('image/jpeg',0.78));
+      };
+      img.onerror=()=>resolve(r.result); img.src=r.result;
+    };
+    r.onerror=()=>resolve(''); r.readAsDataURL(file);
+  });
+}
+
+function keuanganYears(){
+  const ys=new Set(keuangan.filter(t=>t.tgl).map(t=>t.tgl.slice(0,4)));
+  ys.add(String(new Date().getFullYear()));
+  return [...ys].map(Number).sort((a,b)=>a-b);
+}
+function shiftBerandaYear(d){
+  const ys=keuanganYears(), min=Math.min(...ys), max=Math.max(...ys);
+  berandaYear=Math.min(max,Math.max(min,berandaYear+d));
+  renderBeranda();
+}
+function abbrRp(n){
+  if(!n) return '';
+  if(n>=1000000) return (Math.round(n/100000)/10)+'jt';
+  if(n>=1000) return Math.round(n/1000)+'rb';
+  return String(n);
+}
+function kasByMonthYear(year){
+  const arr=Array.from({length:12},()=>({masuk:0,keluar:0}));
+  keuangan.forEach(t=>{
+    if(!t.tgl||t.tgl.slice(0,4)!==String(year))return;
+    const mi=parseInt(t.tgl.slice(5,7),10)-1;
+    if(mi>=0&&mi<12) arr[mi][t.jenis]+=Number(t.jumlah)||0;
+  });
+  return arr;
+}
+function chartSVG(year){
+  const data=kasByMonthYear(year);
+  const max=Math.max(1,...data.map(d=>Math.max(d.masuk,d.keluar)));
+  const groupW=52,barW=11,chartH=78,top=26,base=top+chartH;
+  const width=12*groupW+16;
+  let bars='';
+  data.forEach((d,i)=>{
+    const x=10+i*groupW, hm=(d.masuk/max)*chartH, hk=(d.keluar/max)*chartH;
+    bars+=`<rect x="${x}" y="${base-hm}" width="${barW}" height="${hm}" rx="2" fill="var(--primary)"></rect>`;
+    if(d.masuk) bars+=`<text x="${x+barW/2}" y="${base-hm-4}" font-size="7" fill="var(--primary)" text-anchor="middle" font-family="var(--sans)">${abbrRp(d.masuk)}</text>`;
+    bars+=`<rect x="${x+barW+3}" y="${base-hk}" width="${barW}" height="${hk}" rx="2" fill="var(--gold)"></rect>`;
+    if(d.keluar) bars+=`<text x="${x+barW+3+barW/2}" y="${base-hk-4}" font-size="7" fill="var(--gold)" text-anchor="middle" font-family="var(--sans)">${abbrRp(d.keluar)}</text>`;
+    bars+=`<text x="${x+barW+1.5}" y="${base+11}" font-size="8.5" fill="var(--muted)" text-anchor="middle" font-family="var(--sans)">${bulanPendek[i]}</text>`;
+  });
+  return `<div style="overflow-x:auto"><svg viewBox="0 0 ${width} ${base+22}" height="140" style="min-width:${width*1.7}px;display:block">${bars}</svg></div>`;
+}
+
+/* ---------------- beranda ---------------- */
+function renderBeranda(){
+  const bisaEdit=session.role==='pengurus';
+  const totalUnit=allBlokCodes().length;
+  const dihuni=warga.filter(w=>w.status==='dihuni').length;
+  const belumDidata=Math.max(0,totalUnit-warga.length);
+  const saldo=keuangan.reduce((a,t)=>a+(t.jenis==='masuk'?t.jumlah:-t.jumlah),0);
+  const lunas=warga.filter(w=>w.iuran[3]==='lunas').length;
+  const list=[...keuangan].sort((a,b)=>b.tgl.localeCompare(a.tgl)).slice(0,6);
+  document.getElementById('tab-beranda').innerHTML=`
+  <p style="margin:0 0 16px;color:var(--muted);font-size:13px">Selamat datang, <b style="color:var(--ink)">${esc(session.name)}</b> · Rumah ${esc(session.rumah)}</p>
+  <div class="stat-row">
+    <div class="stat"><b>${dihuni}/${totalUnit}</b><span>Unit dihuni</span></div>
+    <div class="stat"><b>${fmtRp(saldo)}</b><span>Saldo kas warga</span></div>
+  </div>
+  <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
+    <span>Ringkasan kas — Tahun ${berandaYear}</span>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button onclick="shiftBerandaYear(-1)" style="background:none;border:1px solid var(--line);border-radius:6px;width:26px;height:26px;color:var(--ink);font-size:13px;cursor:pointer">‹</button>
+      <button onclick="shiftBerandaYear(1)" style="background:none;border:1px solid var(--line);border-radius:6px;width:26px;height:26px;color:var(--ink);font-size:13px;cursor:pointer">›</button>
+    </div>
+  </div>
+  <div class="card">${chartSVG(berandaYear)}
+    <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:6px">
+    <span style="color:var(--primary)">●</span> Pemasukan &nbsp; <span style="color:var(--gold)">●</span> Pengeluaran</div>
+    ${(()=>{const d=kasByMonthYear(berandaYear);const tm=d.reduce((a,x)=>a+x.masuk,0),tk=d.reduce((a,x)=>a+x.keluar,0);return `<div style="display:flex;justify-content:space-around;border-top:1px solid var(--line);margin-top:10px;padding-top:10px">
+      <div style="text-align:center"><b style="font-size:14px;color:var(--primary)">${fmtRp(tm)}</b><div style="font-size:10.5px;color:var(--muted)">Total masuk ${berandaYear}</div></div>
+      <div style="text-align:center"><b style="font-size:14px;color:var(--gold)">${fmtRp(tk)}</b><div style="font-size:10.5px;color:var(--muted)">Total keluar ${berandaYear}</div></div>
+    </div>`;})()}
+  </div>
+  <div class="section-title">Iuran bulan ini</div>
+  <div class="card"><b style="font-size:20px">${lunas}/${warga.filter(w=>w.iuran[3]!=='-').length}</b> <span style="color:var(--muted);font-size:12px"> rumah sudah lunas</span></div>
+  <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
+    <span>Riwayat kas</span>
+    <div style="display:flex;align-items:center;gap:12px">
+      <button onclick="openRiwayatLengkap()" style="background:none;border:none;color:var(--primary);font-size:12px;cursor:pointer;font-family:var(--sans);padding:0">Lihat semua</button>
+      ${bisaEdit?`<button class="btn-primary" style="width:auto;padding:6px 14px;font-size:12px" onclick="openAddTransaksi()">+ Tambah</button>`:''}
+    </div>
+  </div>
+  <div class="card">${list.map(t=>`<div class="exp-item" onclick="openTransaksi('${t.id}')">
+    <div><b style="font-size:13px">${esc(t.judul)}</b><div class="meta">${t.tgl} · klik untuk lihat detail</div></div>
+    <div class="amt" style="color:${t.jenis==='masuk'?'var(--primary)':'var(--terra)'}">${t.jenis==='masuk'?'+':'-'}${fmtRp(t.jumlah)}</div></div>`).join('')||'<div class="empty">Belum ada</div>'}</div>
+  <div class="section-title">Pengumuman terbaru</div>
+  <div class="card">${pengumuman.slice(0,2).map(p=>`<div class="item"><b>${esc(p.j)}</b><div class="meta">${p.tgl}</div></div>`).join('')||'<div class="empty">Belum ada pengumuman</div>'}</div>`;
+}
+function openRiwayatLengkap(){
+  const all=[...keuangan].sort((a,b)=>b.tgl.localeCompare(a.tgl));
+  let lastYear='';
+  const rows=all.map(t=>{
+    const y=t.tgl.slice(0,4);
+    const heading=y!==lastYear?(lastYear=y,`<div style="font-size:11.5px;font-weight:700;color:var(--muted);margin:14px 0 6px 2px">${y}</div>`):'';
+    return heading+`<div class="exp-item" onclick="openTransaksi('${t.id}')">
+    <div><b style="font-size:13px">${esc(t.judul)}</b><div class="meta">${t.tgl} · klik untuk lihat detail</div></div>
+    <div class="amt" style="color:${t.jenis==='masuk'?'var(--primary)':'var(--terra)'}">${t.jenis==='masuk'?'+':'-'}${fmtRp(t.jumlah)}</div></div>`;
+  }).join('');
+  openSheet(`<button class="close-x" onclick="closeSheet()">×</button>
+  <h3 style="margin:0 0 4px">Riwayat Kas Lengkap</h3>
+  <p style="font-size:12px;color:var(--muted);margin:0 0 6px">${all.length} transaksi tercatat sejak awal — tidak pernah terhapus otomatis.</p>
+  ${rows||'<div class="empty">Belum ada transaksi.</div>'}`);
+}
+function openSheet(html){document.getElementById('sheet').innerHTML=html;document.getElementById('overlay').classList.add('show');}
+function closeSheet(){if(typeof stopResetCamera==='function')stopResetCamera();document.getElementById('overlay').classList.remove('show');}
+function openTransaksi(id){
+  const t=keuangan.find(x=>x.id===id); if(!t)return;
+  openSheet(`<button class="close-x" onclick="closeSheet()">×</button>
+  <span class="ai-badge">${t.jenis==='masuk'?'Pemasukan':'Pengeluaran'}</span>
+  <h3 style="margin:4px 0 4px">${esc(t.judul)}</h3>
+  <div class="meta" style="margin-bottom:10px">${t.tgl} · <span style="color:${t.jenis==='masuk'?'var(--primary)':'var(--terra)'};font-weight:600">${t.jenis==='masuk'?'+':'-'}${fmtRp(t.jumlah)}</span></div>
+  <p style="font-size:13.5px;margin:0 0 16px">${esc(t.catatan)}</p>
+  <div class="section-title">Foto kegiatan</div>
+  ${t.fotoKegiatan?`<img src="${t.fotoKegiatan}">`:'<div class="empty">Belum ada foto</div>'}
+  <div class="section-title">Foto kuitansi</div>
+  ${t.fotoKuitansi?`<img src="${t.fotoKuitansi}">`:'<div class="empty">Belum ada foto</div>'}
+  ${isPengurus()?`<button type="button" onclick="hapusTransaksi('${t.id}')" style="width:100%;margin-top:18px;padding:10px;border:1px solid var(--terra);background:none;border-radius:8px;color:var(--terra);font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer">🗑 Hapus Transaksi Ini</button>`:''}`);
+}
+function hapusTransaksi(id){
+  const t=keuangan.find(x=>x.id===id); if(!t)return;
+  if(!confirm(`Hapus transaksi "${t.judul}" (${fmtRp(t.jumlah)})?\n\nData yang sudah dihapus tidak bisa dikembalikan.`))return;
+  keuangan=keuangan.filter(x=>x.id!==id);
+  saveData(); closeSheet(); renderBeranda();
+}
+function openAddTransaksi(){
+  openSheet(`<button class="close-x" onclick="closeSheet()">×</button>
+  <h3 style="margin:0 0 12px">Tambah Transaksi</h3>
+  <form id="fTrans">
+    <input type="hidden" name="jenis" id="jenisInput" value="masuk">
+    <div class="segmented" style="margin-bottom:12px">
+      <button type="button" id="jMasuk" class="sel" onclick="setJenis('masuk')">Pemasukan</button>
+      <button type="button" id="jKeluar" onclick="setJenis('keluar')">Pengeluaran</button>
+    </div>
+    <input class="field" type="date" name="tgl" required>
+    <input class="field" name="judul" placeholder="Keterangan (contoh: Iuran bulan Oktober)" required>
+    <input class="field" type="number" name="jumlah" placeholder="Jumlah (Rp)" required min="0">
+    <textarea class="field" name="catatan" rows="2" placeholder="Catatan tambahan (opsional)"></textarea>
+    <label style="font-size:11.5px;color:var(--muted)">Foto kegiatan (opsional)</label>
+    <input class="field" type="file" accept="image/*" name="fotoKegiatan">
+    <label style="font-size:11.5px;color:var(--muted)">Foto kuitansi (opsional)</label>
+    <input class="field" type="file" accept="image/*" name="fotoKuitansi">
+    <button class="btn-primary" type="submit">Simpan</button>
+  </form>`);
+  document.getElementById('fTrans').onsubmit=async e=>{
+    e.preventDefault();
+    const fd=new FormData(e.target);
+    const [fk,fq]=await Promise.all([readFile(fd.get('fotoKegiatan')),readFile(fd.get('fotoKuitansi'))]);
+    keuangan.unshift({id:uid(),jenis:fd.get('jenis'),tgl:fd.get('tgl')||new Date().toISOString().slice(0,10),judul:fd.get('judul'),jumlah:Number(fd.get('jumlah'))||0,catatan:fd.get('catatan')||'',fotoKegiatan:fk,fotoKuitansi:fq});
+    saveData(); closeSheet(); renderBeranda();
+  };
+}
+function setJenis(j){
+  document.getElementById('jenisInput').value=j;
+  document.getElementById('jMasuk').classList.toggle('sel',j==='masuk');
+  document.getElementById('jKeluar').classList.toggle('sel',j==='keluar');
+}
+
+
+/* ---------------- iuran ---------------- */
+function renderIuran(){
+  const bisaEdit=session.role==='pengurus';
+  // Semua warga dapat melihat status iuran seluruh rumah.
+  // Hanya pengurus dan pemilik rumah yang boleh mengubah/mengirim konfirmasi.
+  const daftar=warga;
+  document.getElementById('tab-iuran').innerHTML=`
+  ${!bisaEdit?'<div class="note">Status iuran seluruh rumah dapat dilihat semua warga. Kamu hanya bisa mengirim konfirmasi pembayaran untuk rumahmu sendiri.</div>':''}
+  <div class="card"><h2>Status iuran seluruh warga</h2>
+  <table><thead><tr><th>Rumah</th>${bulan.map(b=>`<th>${b}</th>`).join('')}</tr></thead><tbody>
+  ${daftar.map((w,wi)=>`<tr><td class="who">${w.no}<small>${esc(w.nama)||'kosong'}</small></td>
+    ${w.iuran.map((s,si)=>{
+      if(s==='-') return `<td><span class="pill p-off">–</span></td>`;
+      const own=!bisaEdit && w.no===session.rumah;
+      return `<td><button class="pill ${s==='lunas'?'p-lunas':s==='menunggu'?'p-belum':'p-belum'}" ${own||bisaEdit?'':'disabled title="Hanya pemilik rumah yang dapat mengonfirmasi pembayaran"'} onclick="toggleIuran(${warga.indexOf(w)},${si})">${s==='lunas'?'✓ Lunas':s==='menunggu'?'⏳ Menunggu':'! Belum'}</button></td>`;
+    }).join('')}
+  </tr>`).join('')}
+  </tbody></table></div>`;
+}
+function toggleIuran(wi,si){
+  const w=warga[wi]; if(!w||!w.iuran)return;
+  const cur=w.iuran[si]; if(cur==='-')return;
+  if(isPengurus()){
+    w.iuran[si]=cur==='lunas'?'belum':cur==='menunggu'?'lunas':'lunas';
+    saveData();
+  } else {
+    if(w.no!==session.rumah){alert('Kamu hanya dapat mengonfirmasi iuran rumahmu sendiri.');return;}
+    if(cur==='menunggu'){alert('Konfirmasi untuk bulan ini sudah menunggu verifikasi pengurus.');return;}
+    if(cur==='lunas'){alert('Iuran bulan ini sudah tercatat lunas.');return;}
+    w.iuran[si]='menunggu';
+    if(localStorage.getItem('ais_tagihan_notif')!=='0') notifikasi.unshift({id:uid(),type:'bayar',rumah:w.no,nama:w.nama,bulan:bulan[si],tgl:new Date().toISOString().slice(0,10),read:false,hasil:null});
+    saveData(); updateNotifBadge();
+    alert('Konfirmasi bayar terkirim ke pengurus untuk diverifikasi.');
+  }
+  renderIuran();
+}
+
+/* ---------------- info: berita / pengumuman / aspirasi ---------------- */
+let infoView='berita';
+function setInfoView(v){infoView=v;renderInfo();}
+let pengurusList=[
+  {id:'ketua',jabatan:'Ketua',nama:'',telp:'',foto:''},
+  {id:'wakil-ketua',jabatan:'Wakil Ketua',nama:'',telp:'',foto:''},
+  {id:'bendahara-1',jabatan:'Bendahara 1',nama:'',telp:'',foto:''},
+  {id:'bendahara-2',jabatan:'Bendahara 2',nama:'',telp:'',foto:''},
+  {id:'sekretaris-1',jabatan:'Sekretaris 1',nama:'',telp:'',foto:''},
+  {id:'sekretaris-2',jabatan:'Sekretaris 2',nama:'',telp:'',foto:''},
+  {id:'agama-1',jabatan:'Seksi Agama 1',nama:'',telp:'',foto:''},
+  {id:'agama-2',jabatan:'Seksi Agama 2',nama:'',telp:'',foto:''},
+  {id:'pembangunan-1',jabatan:'Seksi Pembangunan 1',nama:'',telp:'',foto:''},
+  {id:'pembangunan-2',jabatan:'Seksi Pembangunan 2',nama:'',telp:'',foto:''},
+  {id:'olahraga-1',jabatan:'Seksi Olahraga 1',nama:'',telp:'',foto:''},
+  {id:'olahraga-2',jabatan:'Seksi Olahraga 2',nama:'',telp:'',foto:''},
+  {id:'teknologi-1',jabatan:'Seksi Teknologi 1',nama:'',telp:'',foto:''},
+  {id:'teknologi-2',jabatan:'Seksi Teknologi 2',nama:'',telp:'',foto:''},
+  {id:'keamanan-1',jabatan:'Seksi Keamanan 1',nama:'',telp:'',foto:''},
+  {id:'keamanan-2',jabatan:'Seksi Keamanan 2',nama:'',telp:'',foto:''},
+  {id:'lingkungan-1',jabatan:'Seksi Lingkungan 1',nama:'',telp:'',foto:''},
+  {id:'lingkungan-2',jabatan:'Seksi Lingkungan 2',nama:'',telp:'',foto:''},
+];
+function pengurusInitial(nama){return (nama||'?').trim()[0]?.toUpperCase()||'?';}
+function renderPengurusList(){
+  return `<p style="font-size:12px;color:var(--muted);margin:2px 0 12px">Susunan Pengurus Paguyuban Blok D. ${isPengurus()?'Tap salah satu untuk mengisi/mengubah nama, foto, atau nomor HP.':'Tap untuk melihat kontak.'}</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+  ${pengurusList.map(p=>`<div class="card" style="text-align:center;padding:14px 8px;cursor:pointer" onclick="openPengurusDetail('${p.id}')">
+    <div class="avatar avatar-lg" style="margin:0 auto;width:56px;height:56px;font-size:20px">${p.foto?`<img src="${p.foto}">`:pengurusInitial(p.nama)}</div>
+    <div style="font-size:10.5px;color:var(--muted);margin-top:8px;font-weight:600;text-transform:uppercase;letter-spacing:.02em">${esc(p.jabatan)}</div>
+    <div style="font-size:13px;font-weight:600;margin-top:2px">${p.nama?esc(p.nama):'<span style="color:var(--muted);font-weight:400">Belum diisi</span>'}</div>
+  </div>`).join('')}
+  </div>`;
+}
+function openPengurusDetail(id){
+  const p=pengurusList.find(x=>x.id===id); if(!p)return;
+  const editBtn=isPengurus()?`<button type="button" onclick="document.getElementById('fi_peng_${id}').click()" style="display:block;margin:8px auto 0;background:none;border:none;color:var(--primary);font-size:11px;cursor:pointer;font-family:var(--sans)">📷 ${p.foto?'Ubah':'Tambah'} foto</button>
+    <input type="file" id="fi_peng_${id}" accept="image/*" style="display:none" onchange="handlePengurusFoto(this,'${id}')">`:'';
+  openSheet(`<button class="close-x" onclick="closeSheet()">×</button>
+  <div style="text-align:center;margin-bottom:6px">
+    <div class="avatar avatar-lg" style="margin:0 auto;width:76px;height:76px;font-size:28px">${p.foto?`<img src="${p.foto}">`:pengurusInitial(p.nama)}</div>
+    ${editBtn}
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-top:10px;font-weight:600">${esc(p.jabatan)}</div>
+    <h3 style="margin:2px 0 0">${p.nama?esc(p.nama):'Belum diisi'}</h3>
+  </div>
+  ${p.telp?`<div class="contact-row" style="margin-top:12px">
+    <a class="contact-call" href="tel:${p.telp.replace(/\\D/g,'')}">📞 Telepon</a>
+    <a class="contact-wa" href="https://wa.me/${waFmt(p.telp)}" target="_blank" rel="noopener">💬 WhatsApp</a>
+  </div>`:''}
+  ${isPengurus()?`<form id="fPengurus" style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px">
+    <label style="font-size:11.5px;color:var(--muted)">Nama</label>
+    <input class="field" name="nama" value="${esc(p.nama)}" placeholder="Nama lengkap">
+    <label style="font-size:11.5px;color:var(--muted)">Nomor HP</label>
+    <input class="field" name="telp" value="${esc(p.telp)}" placeholder="08xxxxxxxxxx">
+    <button class="btn-primary" type="submit">Simpan</button>
+  </form>`:''}`);
+  const f=document.getElementById('fPengurus');
+  if(f) f.onsubmit=e=>{e.preventDefault();const fd=new FormData(e.target);p.nama=fd.get('nama').trim();p.telp=fd.get('telp').trim();saveData();openPengurusDetail(id);renderInfo();};
+}
+function handlePengurusFoto(input,id){
+  if(!isPengurus()){alert('Hanya Pengurus yang dapat mengubah foto.');return;}
+  const file=input.files[0]; if(!file)return;
+  readFile(file).then(data=>{const p=pengurusList.find(x=>x.id===id); if(p&&data){p.foto=data; saveData(); openPengurusDetail(id); renderInfo();}});
+}
+
+function beritaCard(b){
+  const judul=b.ai?b.ai.judul:(b.raw.length>60?b.raw.slice(0,60)+'…':b.raw);
+  const isi=b.ai?b.ai.isi:b.raw;
+  const bisaReview=b.status==='pending'&&session.role==='pengurus';
+  return `<div class="card newscard">
+    ${b.foto?`<img src="${b.foto}">`:''}
+    <div class="newsbody">
+      ${b.status==='loading'?'<span class="ai-loading">✨ Sedang disempurnakan AI…</span>'
+        :b.status==='pending'?'<span class="ai-badge" style="background:var(--line);color:var(--muted)">🕓 Menunggu persetujuan pengurus</span>'
+        :b.ai?'<span class="ai-badge">✨ Ditulis ulang AI</span>':''}
+      <h3>${esc(judul)}</h3>
+      <div class="meta" style="margin-bottom:8px">Oleh ${esc(b.penulis)} · ${b.tgl}</div>
+      <p>${esc(isi)}</p>
+      ${bisaReview?`<div class="contact-row" style="margin-top:12px">
+        <button class="contact-call" onclick="decideBerita('${b.id}',true)">✅ Setujui &amp; Publikasikan</button>
+        <button class="contact-reject" onclick="decideBerita('${b.id}',false)">✕ Tolak</button>
+      </div>`:''}
+      ${session.role==='pengurus'&&b.status!=='pending'&&b.status!=='loading'?`<button type="button" onclick="hapusBerita('${b.id}')" style="margin-top:10px;background:none;border:none;color:var(--terra);font-size:11.5px;cursor:pointer;font-family:var(--sans);padding:0">🗑 Hapus berita ini</button>`:''}
+    </div></div>`;
+}
+function hapusBerita(id){
+  const b=berita.find(x=>x.id===id); if(!b)return;
+  if(!confirm('Hapus berita ini? Tindakan ini tidak bisa dibatalkan.'))return;
+  berita=berita.filter(x=>x.id!==id);
+  saveData(); renderInfo();
+}
+function decideBerita(id,approve){
+  const b=berita.find(x=>x.id===id); if(!b)return;
+  b.status=approve?'published':'rejected';
+  const n=notifikasi.find(x=>x.beritaId===id); if(n){n.read=true;n.hasil=approve?'terbit':'tolak';}
+  saveData(); renderInfo(); renderNotifikasi(); updateNotifBadge();
+}
+async function aiRewriteBerita(id){
+  const b=berita.find(x=>x.id===id); if(!b)return;
+  try{
+    if(window.claude&&window.claude.use){
+      const sample=await window.claude.use('sample');
+      if(sample){
+        const prompt='Kamu editor berita warga. Ubah catatan warga berikut menjadi artikel berita singkat bergaya media online Indonesia (seperti detik.com): judul menarik maksimal 12 kata, isi 2 paragraf naratif berbahasa baku tapi renyah, jangan mengarang fakta baru. Balas HANYA JSON valid tanpa markdown: {"judul":"...","isi":"..."}. Catatan asli warga: "'+b.raw.replace(/"/g,"'")+'"';
+        const res=await sample.json(prompt);
+        if(res&&res.judul&&res.isi) b.ai=res;
+      }
+    }
+  }catch(e){ /* gagal -> tampilkan versi asli */ }
+  b.status='pending'; saveData(); renderInfo(); renderNotifikasi(); updateNotifBadge();
+}
+function submitBerita(e){
+  e.preventDefault();
+  const fd=new FormData(e.target); const file=fd.get('foto'); const id=uid();
+  const item={id,penulis:(session.name||'Warga')+' ('+(session.rumah||'-')+')',tgl:new Date().toISOString().slice(0,10),raw:fd.get('isi'),foto:'',ai:null,status:'loading'};
+  berita.unshift(item);
+  notifikasi.unshift({id:uid(),type:'berita',penulis:item.penulis,judul:item.raw.length>50?item.raw.slice(0,50)+'…':item.raw,tgl:item.tgl,read:false,beritaId:id});
+  saveData(); updateNotifBadge(); renderInfo();
+  const go=()=>aiRewriteBerita(id);
+  if(file&&file.size>0){readFile(file).then(data=>{item.foto=data;saveData();go();});} else go();
+}
+
+function aspirasiCard(a){
+  const bisaLihat=session.role==='pengurus';
+  const myVote=(a.votes&&session.rumah)?a.votes[session.rumah]:null;
+  return `<div class="card">
+    <div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(a.nama)}</b>${bisaLihat?`<button type="button" onclick="hapusAspirasi('${a.id}')" style="background:none;border:none;color:var(--terra);font-size:11px;cursor:pointer;font-family:var(--sans);white-space:nowrap">🗑 Hapus</button>`:''}</div>
+    <div class="meta">${a.tgl}</div>
+    <p style="font-size:13.5px;margin:8px 0 0">${esc(a.isi)}</p>
+    <div class="vote-row">
+      <button class="vote-btn up ${myVote==='up'?'on':''}" onclick="vote('${a.id}','up')">👍 Setuju (${a.up})</button>
+      <button class="vote-btn down ${myVote==='down'?'on':''}" onclick="vote('${a.id}','down')">👎 Tidak Setuju (${a.down})</button>
+    </div>
+    ${bisaLihat&&((a.setujuNama&&a.setujuNama.length)||(a.tidakNama&&a.tidakNama.length))?`<div class="meta" style="margin-top:10px;line-height:1.7;padding-top:8px;border-top:1px solid var(--line)">
+      ${a.setujuNama&&a.setujuNama.length?`<b style="color:var(--primary)">Setuju:</b> ${a.setujuNama.map(esc).join(', ')}<br>`:''}
+      ${a.tidakNama&&a.tidakNama.length?`<b style="color:var(--terra)">Tidak setuju:</b> ${a.tidakNama.map(esc).join(', ')}`:''}
+    </div>`:''}
+  </div>`;
+}
+function hapusAspirasi(id){
+  const a=aspirasi.find(x=>x.id===id); if(!a)return;
+  if(!confirm('Hapus aspirasi ini?'))return;
+  aspirasi=aspirasi.filter(x=>x.id!==id);
+  saveData(); renderInfo();
+}
+function vote(id,dir){
+  const a=aspirasi.find(x=>x.id===id); if(!a||!session.rumah)return;
+  if(!a.votes)a.votes={};
+  const voterKey=session.rumah; const old=a.votes[voterKey]||null;
+  if(old===dir){ a[dir]--; delete a.votes[voterKey]; }
+  else {
+    if(old){a[old]--; }
+    a[dir]++; a.votes[voterKey]=dir;
+  }
+  // Nama voting tetap hanya ditampilkan ke Pengurus.
+  a.setujuNama=[]; a.tidakNama=[];
+  Object.entries(a.votes).forEach(([rumah,v])=>{const w=warga.find(x=>x.no===rumah); const label=w?(w.nama+' ('+rumah+')'):rumah; (v==='up'?a.setujuNama:a.tidakNama).push(label);});
+  saveData(); renderInfo();
+}
+
+function hapusPengumuman(id){
+  const p=pengumuman.find(x=>x.id===id); if(!p)return;
+  if(!confirm(`Hapus pengumuman "${p.j}"?`))return;
+  pengumuman=pengumuman.filter(x=>x.id!==id);
+  saveData(); renderInfo(); renderBeranda();
+}
+function renderInfo(){
+  const bisaEdit=session.role==='pengurus';
+  let body='';
+  if(infoView==='berita'){
+    body=`<div class="card"><h2>Tulis berita warga</h2>
+      <form id="fBerita">
+        <input class="field" type="file" accept="image/*" name="foto">
+        <textarea class="field" name="isi" rows="3" placeholder="Ceritakan kejadiannya apa adanya, nanti AI bantu rapikan jadi berita..." required></textarea>
+        <button class="btn-primary" type="submit">Kirim &amp; sempurnakan dengan AI ✨</button>
+      </form></div>
+      ${berita.filter(b=>b.status!=='rejected').map(beritaCard).join('')||'<div class="empty">Belum ada berita warga</div>'}`;
+  } else if(infoView==='pengumuman'){
+    body=`${bisaEdit?`<div class="card"><h2>Buat pengumuman</h2>
+      <form id="fInfo"><input class="field" name="judul" placeholder="Judul" required>
+      <input class="field" name="isi" placeholder="Isi singkat" required>
+      <button class="btn-primary" type="submit">Publikasikan</button></form></div>`:''}
+      <div class="card">${pengumuman.map(p=>`<div class="item"><div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(p.j)}</b>${bisaEdit?`<button type="button" onclick="hapusPengumuman('${p.id}')" style="background:none;border:none;color:var(--terra);font-size:11px;cursor:pointer;font-family:var(--sans);white-space:nowrap">🗑 Hapus</button>`:''}</div><div class="meta">${p.tgl}</div><div style="font-size:13px;margin-top:4px">${esc(p.i)}</div></div>`).join('')||'<div class="empty">Belum ada</div>'}</div>`;
+  } else if(infoView==='pengurus'){
+    body=renderPengurusList();
+  } else {
+    body=`<div class="card"><h2>Sampaikan aspirasi</h2>
+      <form id="fAsp"><input class="field" name="nama" placeholder="Nama (opsional)">
+      <textarea class="field" name="isi" rows="2" placeholder="Tulis usulan atau keluhan..." required></textarea>
+      <button class="btn-primary" type="submit">Kirim</button></form></div>
+      ${aspirasi.map(aspirasiCard).join('')||'<div class="empty">Belum ada aspirasi</div>'}`;
+  }
+  document.getElementById('tab-info').innerHTML=`
+  <div class="segmented">
+    <button class="${infoView==='berita'?'sel':''}" onclick="setInfoView('berita')">Berita</button>
+    <button class="${infoView==='pengumuman'?'sel':''}" onclick="setInfoView('pengumuman')">Pengumuman</button>
+    <button class="${infoView==='aspirasi'?'sel':''}" onclick="setInfoView('aspirasi')">Aspirasi</button>
+    <button class="${infoView==='pengurus'?'sel':''}" onclick="setInfoView('pengurus')">Pengurus</button>
+  </div>${body}`;
+  const fB=document.getElementById('fBerita'); if(fB) fB.onsubmit=submitBerita;
+  const fI=document.getElementById('fInfo'); if(fI) fI.onsubmit=e=>{e.preventDefault();const fd=new FormData(e.target);pengumuman.unshift({id:uid(),j:fd.get('judul'),i:fd.get('isi'),tgl:new Date().toISOString().slice(0,10),createdBy:session.rumah||'pengurus'});saveData();renderInfo();renderBeranda();};
+  const fA=document.getElementById('fAsp'); if(fA) fA.onsubmit=e=>{e.preventDefault();const fd=new FormData(e.target);aspirasi.unshift({id:uid(),nama:fd.get('nama')||(session.name||'Warga'),rumah:session.rumah||'',isi:fd.get('isi'),tgl:new Date().toISOString().slice(0,10),up:0,down:0,votes:{},setujuNama:[],tidakNama:[]});saveData();renderInfo();};
+}
+
+/* ---------------- warga / denah ---------------- */
+let wargaView='daftar';
+let denahMode='urutan';
+function statusLabel(w){
+  if(w.status==='dihuni') return w.kepemilikan==='sewa'?'Ngontrak':'Rumah Pribadi';
+  if(w.status==='kosong-pemilik') return 'Kosong · Sudah Ada Pemilik';
+  return 'Kosong · Belum Ada Pemilik';
+}
+function rumahClass(w){
+  if(w.status==='dihuni') return w.kepemilikan==='sewa'?'sewa':'dihuni';
+  if(w.status==='kosong-pemilik') return 'kosongpemilik';
+  return 'kosong';
+}
+function dgCell(no,col,row){
+  const w=warga.find(x=>x.no===no);
+  const cls=w?('dg-'+rumahClass(w)):'dg-belum';
+  return `<div class="dg-cell ${cls}" style="grid-column:${col};grid-row:${row}" onclick="openRumahProfile('${no}')">${no}</div>`;
+}
+function renderDenahReal(){
+  const d5=['D5/24','D5/23','D5/22','D5/21','D5/20','D5/19','D5/18','D5/17','D5/16','D5/15'];
+  const d3top=['D3/4','D3/3','D3/2','D3/1'], d3bot=['D3/5','D3/6','D3/7','D3/8'];
+  const d2top=['D2/12','D2/11','D2/10','D2/9','D2/8','D2/7','D2/6','D2/5','D2/4','D2/3','D2/2','D2/1','D2/1A'];
+  const d2bot=['D2/12A','D2/14','D2/15','D2/16','D2/17','D2/18','D2/19','D2/20','D2/21','D2/22','D2/23','D2/24','D2/24A'];
+  const d1top=['D1/10A','D1/10','D1/9','D1/8','D1/7','D1/6','D1/5','D1/4','D1/3','D1/2','D1/1'];
+  const d1bot=['D1/11A','D1/11','D1/12','D1/12A','D1/14','D1/15','D1/16','D1/17','D1/18','D1/19','D1/20'];
+  let h='';
+  d5.forEach((n,i)=>h+=dgCell(n,1,i+1));
+  h+=`<div class="dg-cell dg-fasum" style="grid-column:2/6;grid-row:1/3">Fasum</div>`;
+  h+=`<div class="dg-cell dg-pos" style="grid-column:16/20;grid-row:3/5">Pos Blok D</div>`;
+  h+=`<div class="dg-cell dg-lap" style="grid-column:15/17;grid-row:7/9">Lapangan<br>Bulutangkis</div>`;
+  d3top.forEach((n,i)=>h+=dgCell(n,2+i,3));
+  d3bot.forEach((n,i)=>h+=dgCell(n,2+i,4));
+  d2top.forEach((n,i)=>h+=dgCell(n,2+i,7));
+  d2bot.forEach((n,i)=>h+=dgCell(n,2+i,8));
+  d1top.forEach((n,i)=>h+=dgCell(n,17+i,7));
+  d1bot.forEach((n,i)=>h+=dgCell(n,17+i,8));
+  return `<div class="denah-scroll"><div class="denah-grid">${h}</div></div>
+  <p style="font-size:11px;color:var(--muted);margin:10px 0 0">🟩 Fasilitas umum &amp; olahraga · 🟧 Pos keamanan · geser untuk lihat semua, tap nomor rumah untuk buka datanya.</p>`;
+}
+function setDenahMode(m){denahMode=m;renderWarga();}
+function allBlokCodes(){
+  const d1=['D1/1','D1/2','D1/3','D1/4','D1/5','D1/6','D1/7','D1/8','D1/9','D1/10','D1/10A','D1/11','D1/11A','D1/12','D1/12A','D1/14','D1/15','D1/16','D1/17','D1/18','D1/19','D1/20'];
+  const d2=['D2/1','D2/1A','D2/2','D2/3','D2/4','D2/5','D2/6','D2/7','D2/8','D2/9','D2/10','D2/11','D2/12','D2/12A','D2/14','D2/15','D2/16','D2/17','D2/18','D2/19','D2/20','D2/21','D2/22','D2/23','D2/24','D2/24A'];
+  const d3=['D3/1','D3/2','D3/3','D3/4','D3/5','D3/6','D3/7','D3/8'];
+  const d5=['D5/15','D5/16','D5/17','D5/18','D5/19','D5/20','D5/21','D5/22','D5/23','D5/24'];
+  return [...d1,...d2,...d3,...d5];
+}
+function renderUrutanGrid(){
+  const codes=allBlokCodes();
+  return `<div class="grid-rumah">${codes.map(no=>{
+    const w=warga.find(x=>x.no===no);
+    const cls=w?rumahClass(w):'belum';
+    return `<div class="rumah r-${cls}" style="cursor:pointer" onclick="openRumahProfile('${no}')">${no}</div>`;
+  }).join('')}</div>
+  <div class="legend"><span><i style="background:var(--primary)"></i>Rumah Pribadi</span><span><i style="background:var(--gold)"></i>Ngontrak</span><span><i style="background:var(--info)"></i>Kosong · Ada Pemilik</span><span><i style="background:var(--kosong-bg)"></i>Kosong / Belum Ada Pemilik</span><span><i style="background:var(--line)"></i>Belum Didata</span></div>`;
+}
+function renderWarga(){
+  document.getElementById('tab-warga').innerHTML=`
+  <div class="segmented">
+    <button class="${wargaView==='daftar'?'sel':''}" onclick="setWargaView('daftar')">Daftar</button>
+    <button class="${wargaView==='denah'?'sel':''}" onclick="setWargaView('denah')">Denah</button>
+  </div>
+  ${wargaView==='daftar'?`
+  <div class="card">${allBlokCodes().map(no=>{
+    const w=warga.find(x=>x.no===no);
+    return `<div class="item" style="cursor:pointer" onclick="openRumahProfile('${no}')"><b>${no}</b> — ${w?esc(w.nama)||'<span style="color:var(--muted)">kosong</span>':'<span style="color:var(--muted)">belum ada data</span>'}
+    <div class="meta">${w?statusLabel(w):'Belum ada data rumah'}</div></div>`;
+  }).join('')}</div>`
+  :`<div class="segmented" style="margin-bottom:12px">
+      <button class="${denahMode==='urutan'?'sel':''}" onclick="setDenahMode('urutan')">Urutan</button>
+      <button class="${denahMode==='real'?'sel':''}" onclick="setDenahMode('real')">Sesuai Lokasi Asli</button>
+    </div>
+    ${denahMode==='urutan'?`<div class="card">${renderUrutanGrid()}</div>`:`<div class="card">${renderDenahReal()}</div>`}`}`;
+}
+function waFmt(t){return (t||'').replace(/\D/g,'').replace(/^0/,'62');}
+function avatarBlock(nama,fotoVal,no,field,px){
+  px=px||76;
+  const initial=(nama||'?').replace(/^(Bpk\.|Ibu)\s*/,'')[0]?.toUpperCase()||'?';
+  const editBtn=session.role==='pengurus'?`<button type="button" onclick="document.getElementById('fi_${no}_${field}').click()" style="display:block;margin:6px auto 0;background:none;border:none;color:var(--primary);font-size:11px;cursor:pointer;font-family:var(--sans)">📷 Ubah foto</button>
+    <input type="file" id="fi_${no}_${field}" accept="image/*" style="display:none" onchange="handleFotoUpload(this,'${no}','${field}')">`:'';
+  return `<div style="text-align:center">
+    <div class="avatar avatar-lg" style="margin:0 auto;width:${px}px;height:${px}px;font-size:${Math.round(px*0.36)}px">${fotoVal?`<img src="${fotoVal}">`:initial}</div>
+    ${editBtn}
+  </div>`;
+}
+function handleFotoUpload(input,no,field){
+  if(!isPengurus()){alert('Hanya Pengurus yang dapat mengubah foto.');return;}
+  const file=input.files[0]; if(!file)return;
+  readFile(file).then(data=>{const w=warga.find(x=>x.no===no); if(w&&data){w[field]=data; saveData(); openRumahProfile(no);}});
+}
+function ownerContact(w){
+  return `<div class="section-title">${w.status==='kosong-pemilik'?'Data pemilik':'Pemilik asli rumah'}</div>
+  <div class="card" style="margin-bottom:0">
+    <b>${esc(w.pemilik)}</b>
+    ${w.catatan?`<div class="meta" style="margin-top:2px">${esc(w.catatan)}</div>`:''}
+    <div class="setting-row"><span>No. HP pemilik</span><b>${w.telpPemilik||'-'}</b></div>
+    <div class="contact-row">
+      <a class="contact-call" href="tel:${(w.telpPemilik||'').replace(/\D/g,'')}">📞 Telepon</a>
+      <a class="contact-wa" href="https://wa.me/${waFmt(w.telpPemilik)}" target="_blank" rel="noopener">💬 WhatsApp</a>
+    </div>
+  </div>`;
+}
+function dokumenSection(w){
+  if(session.role!=='pengurus') return '';
+  return `<div class="section-title">Dokumen (khusus pengurus)</div>
+  <div class="card" style="margin-bottom:0">
+    <div style="display:flex;gap:14px">
+      <div style="flex:1;text-align:center">
+        <div class="meta" style="margin-bottom:4px">Foto KK</div>
+        ${w.fotoKK?`<img src="${w.fotoKK}" style="border-radius:8px;width:100%">`:'<div class="empty" style="padding:16px 0;font-size:11px">Belum ada</div>'}
+      </div>
+      <div style="flex:1;text-align:center">
+        <div class="meta" style="margin-bottom:4px">Foto KTP</div>
+        ${w.fotoKTP?`<img src="${w.fotoKTP}" style="border-radius:8px;width:100%">`:'<div class="empty" style="padding:16px 0;font-size:11px">Belum ada</div>'}
+      </div>
+    </div>
+  </div>`;
+}
+function editBtn(no){
+  return session.role==='pengurus'?`<button type="button" onclick="openEditRumah('${no}')" style="float:right;background:none;border:1px solid var(--line);border-radius:8px;padding:5px 10px;font-size:11px;color:var(--primary);cursor:pointer;font-family:var(--sans)">✏️ Edit</button>`:'';
+}
+// Satu pintu profil: Daftar, Denah Urutan, dan Sesuai Lokasi Asli selalu membuka profil yang sama.
+function openRumahProfile(no){
+  const w=warga.find(x=>x.no===no);
+  if(!w){
+    openSheet(`<button class="close-x" onclick="closeSheet()">×</button>
+    <h3 style="margin:0 0 4px">Rumah ${no}</h3>
+    <div class="empty">Data rumah ini belum diinput ke sistem.</div>
+    ${session.role==='pengurus'?`<button class="btn-primary" style="margin-top:14px" onclick="openEditRumah('${no}')">+ Daftarkan Data Rumah Ini</button>`:''}`);
+    return;
+  }
+  if(w.status==='kosong-belum'){
+    openSheet(`${editBtn(no)}<button class="close-x" onclick="closeSheet()">×</button>
+    <h3 style="margin:0 0 4px">Rumah ${no}</h3>
+    <span class="ai-badge">🏗️ Kosong · Belum Ada Pemilik</span>
+    <div class="empty">Rumah ini belum terjual/belum ada pemiliknya. Hubungi pengurus untuk info pemasaran.</div>`);
+    return;
+  }
+  if(w.status==='kosong-pemilik'){
+    openSheet(`${editBtn(no)}<button class="close-x" onclick="closeSheet()">×</button>
+    <h3 style="margin:0 0 4px">Rumah ${no}</h3>
+    <span class="ai-badge">🔑 Kosong · Sudah Ada Pemilik</span>
+    <div style="margin:14px 0 4px">${avatarBlock(w.pemilik,w.fotoPemilik,w.no,'fotoPemilik')}</div>
+    ${ownerContact(w)}
+    ${dokumenSection(w)}`);
+    return;
+  }
+  const isSewa=w.kepemilikan==='sewa';
+  openSheet(`${editBtn(no)}<button class="close-x" onclick="closeSheet()">×</button>
+  ${isSewa?`
+  <div style="display:flex;gap:16px;justify-content:center;margin-bottom:8px">
+    <div>${avatarBlock(w.nama,w.foto,w.no,'foto',64)}<div class="meta" style="text-align:center;margin-top:2px">Penghuni</div></div>
+    <div>${avatarBlock(w.pemilik,w.fotoPemilik,w.no,'fotoPemilik',64)}<div class="meta" style="text-align:center;margin-top:2px">Pemilik</div></div>
+  </div>
+  <div style="text-align:center;margin-bottom:6px"><h3 style="margin:0">${esc(w.nama)}</h3><div class="meta">Rumah ${no}</div><span class="ai-badge" style="margin-top:8px">🔑 Rumah Ngontrak</span></div>`
+  :`<div style="text-align:center;margin-bottom:6px">
+    ${avatarBlock(w.nama,w.foto,w.no,'foto')}
+    <h3 style="margin:8px 0 0">${esc(w.nama)}</h3>
+    <div class="meta">Rumah ${no}</div>
+    <span class="ai-badge" style="margin-top:8px">🏠 Rumah Pribadi</span>
+  </div>`}
+  <div class="setting-row" style="border-top:1px solid var(--line)"><span>No. HP penghuni</span><b>${w.telp||'-'}</b></div>
+  <div class="contact-row">
+    <a class="contact-call" href="tel:${(w.telp||'').replace(/\D/g,'')}">📞 Telepon</a>
+    <a class="contact-wa" href="https://wa.me/${waFmt(w.telp)}" target="_blank" rel="noopener">💬 WhatsApp</a>
+  </div>
+  ${isSewa?ownerContact(w):''}
+  ${session.role==='pengurus' && w.akun ? `
+  <div class="card" style="margin-top:14px;border:1px solid var(--primary);background:var(--surface2)">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <div><h3 style="margin:0 0 4px">🔐 Akun Login Warga</h3><div class="meta">Khusus terlihat oleh Pengurus</div></div>
+      <span class="ai-badge">AKUN AKTIF</span>
+    </div>
+    <div class="setting-row" style="margin-top:10px"><span>Username</span><b id="acctUser_${w.no.replace(/[^A-Za-z0-9]/g,'_')}">${esc(w.akun.username)}</b></div>
+    <div class="setting-row"><span>Password</span><b id="acctPass_${w.no.replace(/[^A-Za-z0-9]/g,'_')}">${esc(w.akun.password)}</b></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+      <button class="btn-ghost" onclick="copyAkunWarga('${w.no}')">📋 Salin Akun</button>
+      <button class="btn-primary" onclick="resetAkunDariProfil('${w.no}')">🔄 Reset Password</button>
+    </div>
+  </div>` : ''}
+  ${dokumenSection(w)}`);
+}
+function copyAkunWarga(no){
+  if(!isPengurus()) return;
+  const w=warga.find(x=>x.no===no); if(!w||!w.akun)return;
+  const text='Username: '+w.akun.username+'\nPassword: '+w.akun.password+'\nRumah: '+w.no;
+  if(navigator.clipboard && window.isSecureContext){ navigator.clipboard.writeText(text).then(()=>alert('Akun berhasil disalin.')); }
+  else { const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); alert('Akun berhasil disalin.'); }
+}
+function resetAkunDariProfil(no){
+  if(!isPengurus()) return;
+  const w=warga.find(x=>x.no===no); if(!w||!w.akun)return;
+  const baru=makePassword(); w.akun.password=baru; w.akun.diubah=new Date().toISOString().slice(0,10); saveData();
+  openRumahProfile(no);
+  setTimeout(()=>alert('Password baru untuk '+w.nama+' ('+w.no+') adalah: '+baru),50);
+}
+
+function onEditStatusChange(){
+  const v=document.getElementById('editStatus').value;
+  const kepEl=document.getElementById('editKepemilikan');
+  document.getElementById('editDihuniFields').classList.toggle('hide', v!=='dihuni');
+  document.getElementById('editPemilikFields').classList.toggle('hide', !(v==='kosong-pemilik'||(v==='dihuni'&&kepEl&&kepEl.value==='sewa')));
+}
+function onEditKepemilikanChange(){ onEditStatusChange(); }
+function openEditRumah(no){
+  if(!isPengurus()){alert('Hanya Pengurus yang dapat mengedit data rumah.');return;}
+  const existing=warga.find(x=>x.no===no);
+  const w=existing||{no,status:'kosong-belum'};
+  const isNew=!existing;
+  openSheet(`<button class="close-x" onclick="closeSheet()">×</button>
+  <h3 style="margin:0 0 12px">${isNew?'Daftarkan':'Edit'} Data Rumah ${no}</h3>
+  <form id="fEditRumah">
+    <label style="font-size:11.5px;color:var(--muted)">Status rumah</label>
+    <select class="field" name="status" id="editStatus" onchange="onEditStatusChange()">
+      <option value="dihuni" ${w.status==='dihuni'?'selected':''}>Dihuni</option>
+      <option value="kosong-pemilik" ${w.status==='kosong-pemilik'?'selected':''}>Kosong · Sudah Ada Pemilik</option>
+      <option value="kosong-belum" ${w.status==='kosong-belum'?'selected':''}>Kosong · Belum Ada Pemilik</option>
+    </select>
+    <div id="editDihuniFields" class="${w.status==='dihuni'?'':'hide'}">
+      <label style="font-size:11.5px;color:var(--muted)">Kepemilikan</label>
+      <select class="field" name="kepemilikan" id="editKepemilikan" onchange="onEditKepemilikanChange()">
+        <option value="milik" ${w.kepemilikan==='milik'?'selected':''}>Rumah Pribadi (milik sendiri)</option>
+        <option value="sewa" ${w.kepemilikan==='sewa'?'selected':''}>Ngontrak</option>
+      </select>
+      <input class="field" name="nama" placeholder="Nama penghuni" value="${esc(w.nama||'')}">
+      <input class="field" name="telp" placeholder="No. HP penghuni" value="${esc(w.telp||'')}">
+      ${w.akun?`<div class="note">🔐 Akun: <b>${esc(w.akun.username)}</b> · Password: <b>${esc(w.akun.password)}</b></div>`:'<div class="note">🔐 Saat data warga baru disimpan, sistem otomatis membuat username & password unik.</div>'}
+    </div>
+    <div id="editPemilikFields" class="${(w.status==='dihuni'&&w.kepemilikan==='sewa')||w.status==='kosong-pemilik'?'':'hide'}">
+      <label style="font-size:11.5px;color:var(--muted)">Data pemilik asli</label>
+      <input class="field" name="pemilik" placeholder="Nama pemilik" value="${esc(w.pemilik||'')}">
+      <input class="field" name="telpPemilik" placeholder="No. HP pemilik" value="${esc(w.telpPemilik||'')}">
+    </div>
+    <textarea class="field" name="catatan" rows="2" placeholder="Catatan (opsional)">${esc(w.catatan||'')}</textarea>
+    <label style="font-size:11.5px;color:var(--muted);display:block;margin-top:2px">📄 Foto Kartu Keluarga (KK) — hanya terlihat pengurus</label>
+    <input class="field" type="file" accept="image/*" name="fotoKK">
+    ${w.fotoKK?'<div class="meta" style="margin:-6px 0 8px">✓ Sudah ada foto KK tersimpan, upload lagi untuk mengganti</div>':''}
+    <label style="font-size:11.5px;color:var(--muted);display:block">🪪 Foto KTP — hanya terlihat pengurus</label>
+    <input class="field" type="file" accept="image/*" name="fotoKTP">
+    ${w.fotoKTP?'<div class="meta" style="margin:-6px 0 8px">✓ Sudah ada foto KTP tersimpan, upload lagi untuk mengganti</div>':''}
+    <button class="btn-primary" type="submit">Simpan</button>
+  </form>`);
+  document.getElementById('fEditRumah').onsubmit=async e=>{
+    e.preventDefault();
+    const fd=new FormData(e.target);
+    let ww=warga.find(x=>x.no===no);
+    if(!ww){ ww={no}; warga.push(ww); }
+    const status=fd.get('status');
+    ww.status=status;
+    if(status==='dihuni'){
+      ww.kepemilikan=fd.get('kepemilikan');
+      ww.nama=fd.get('nama')||''; ww.telp=fd.get('telp')||'';
+      if(ww.nama && !ww.akun) ww.akun={username:makeUniqueUsername(ww.no),password:makePassword(),dibuat:new Date().toISOString().slice(0,10)};
+      if(ww.kepemilikan==='sewa'){ ww.pemilik=fd.get('pemilik')||''; ww.telpPemilik=fd.get('telpPemilik')||''; }
+      else { delete ww.pemilik; delete ww.telpPemilik; delete ww.fotoPemilik; }
+      if(!ww.iuran||ww.iuran[0]==='-') ww.iuran=bulan.map(()=>'belum');
+    } else if(status==='kosong-pemilik'){
+      ww.nama=''; ww.telp=''; delete ww.kepemilikan; delete ww.foto;
+      ww.pemilik=fd.get('pemilik')||''; ww.telpPemilik=fd.get('telpPemilik')||'';
+      if(!ww.iuran||ww.iuran[0]==='-') ww.iuran=bulan.map(()=>'belum');
+    } else {
+      ww.nama=''; ww.telp=''; delete ww.kepemilikan; delete ww.pemilik; delete ww.telpPemilik;
+      ww.iuran=['-','-','-','-'];
+    }
+    ww.catatan=fd.get('catatan')||'';
+    const [kk,ktp]=await Promise.all([readFile(fd.get('fotoKK')),readFile(fd.get('fotoKTP'))]);
+    if(kk) ww.fotoKK=kk;
+    if(ktp) ww.fotoKTP=ktp;
+    saveData(); closeSheet(); renderWarga(); renderBeranda(); renderIuran();
+  };
+}
+function setWargaView(v){wargaView=v;renderWarga();}
+
+/* ---------------- profil ---------------- */
+function renderProfil(){
+  const bisaEdit=session.role==='pengurus';
+  const ww=warga.find(x=>x.no===session.rumah);
+  const akunCard=(!bisaEdit && ww && ww.akun) ?
+    '<div class="card"><h2>Akun Login Saya</h2><div class="setting-row"><span>Username</span><b>'+esc(ww.akun.username)+'</b></div><div class="setting-row"><span>Password</span><b>'+esc(ww.akun.password)+'</b></div><div class="meta" style="margin-top:8px">Simpan data ini. Jika lupa, Pengurus dapat melihat atau membuat password baru.</div></div>' : '';
+  const pengurusCard=bisaEdit ?
+    '<div class="card"><h2>Menu Pengurus</h2><p style="font-size:12px;color:var(--muted);margin:0 0 10px">Kelola akun login warga, unduh rekap data keuangan, aspirasi, dan data warga.</p><button class="btn-primary" onclick="openAkunWarga()">👥 Kelola Akun Warga</button><button class="btn-ghost" style="margin-top:8px" onclick="downloadExcel()">⬇️ Download Data (Excel)</button></div>'
+    +'<div class="card" style="border:1px solid var(--terra)"><h2 style="color:var(--terra)">⚠️ Zona Berbahaya</h2><p style="font-size:12px;color:var(--muted);margin:0 0 10px">Menghapus SEMUA data (kas, warga, pengumuman, berita, aspirasi, pengurus) dan mengembalikan aplikasi ke kondisi kosong seperti baru diinstal. Wajib verifikasi password &amp; foto wajah. Setiap penghapusan otomatis tercatat di riwayat (tersimpan 1 tahun).</p><button class="btn-ghost" style="border-color:var(--terra);color:var(--terra)" onclick="openResetVerifikasi()">🗑 Reset Data Aplikasi</button><button class="btn-ghost" style="margin-top:8px" onclick="openRiwayatHapus()">📜 Riwayat Penghapusan</button></div>' : '';
+  document.getElementById('tab-profil').innerHTML=`
+  <div class="card">
+    <div class="profile-row"><div class="avatar">${(session.name||'W')[0].toUpperCase()}</div>
+      <div><b>${esc(session.name)}</b><div class="meta">Rumah ${esc(session.rumah)} · ${session.role==='pengurus'?'Pengurus':'Warga'}</div></div></div>
+  </div>
+  ${akunCard}
+  <div class="card">
+    <div class="setting-row"><span>Mode gelap</span><button class="switch ${theme==='dark'?'on':''}" onclick="toggleTheme()"><i></i></button></div>
+    <div class="setting-row"><span>Notifikasi tagihan</span><button class="switch ${localStorage.getItem('ais_tagihan_notif')!=='0'?'on':''}" onclick="toggleTagihanNotif()"><i></i></button></div>
+  </div>
+  ${pengurusCard}
+  <button class="btn-ghost" onclick="logout()">Keluar</button>
+  <p style="text-align:center;color:var(--muted);font-size:10.5px;margin-top:22px">Versi 12.0 · mode lokal · Pengurus dapat melihat/reset akun warga</p>`;
+}
+
+let resetState={faceOk:false,photoData:''};
+let faceModelsLoaded=false;
+const FACE_MODEL_URL='https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model';
+async function ensureFaceModels(){
+  if(faceModelsLoaded)return true;
+  try{
+    await faceapi.nets.tinyFaceDetector.loadFromUri(FACE_MODEL_URL);
+    faceModelsLoaded=true;
+    return true;
+  }catch(e){ return false; }
+}
+const HAPUS_LOG_KEY='ais_hapus_log_v1';
+function getHapusLog(){
+  let arr=[]; try{arr=JSON.parse(localStorage.getItem(HAPUS_LOG_KEY)||'[]');}catch(e){arr=[];}
+  const now=new Date();
+  const fresh=arr.filter(e=>{const d=new Date(e.tgl+'T00:00:00');if(isNaN(d))return false;return (now-d)/86400000<=366;});
+  if(fresh.length!==arr.length) localStorage.setItem(HAPUS_LOG_KEY, JSON.stringify(fresh));
+  return fresh;
+}
+function tambahHapusLog(foto){
+  const log=getHapusLog();
+  log.unshift({tgl:new Date().toISOString().slice(0,10),jam:new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}),foto});
+  localStorage.setItem(HAPUS_LOG_KEY, JSON.stringify(log));
+}
+function openRiwayatHapus(){
+  if(!isPengurus())return;
+  const log=getHapusLog();
+  openSheet(`<button class="close-x" onclick="closeSheet()">×</button>
+  <h3 style="margin:0 0 4px">Riwayat Penghapusan Data</h3>
+  <p class="meta" style="margin:0 0 12px">Tercatat otomatis setiap kali Reset Data Aplikasi dilakukan. Riwayat lebih dari 1 tahun terhapus otomatis.</p>
+  ${log.length?log.map(e=>`<div class="item" style="display:flex;gap:12px;align-items:center">
+    <img src="${e.foto}" style="width:52px;height:52px;border-radius:8px;object-fit:cover;flex-shrink:0">
+    <div><b style="font-size:13px">${e.tgl}</b><div class="meta">Pukul ${e.jam||'-'}</div></div>
+  </div>`).join(''):'<div class="empty">Belum ada riwayat penghapusan.</div>'}`);
+}
+let resetStream=null;
+function stopResetCamera(){
+  if(resetStream){ try{resetStream.getTracks().forEach(t=>t.stop());}catch(e){} resetStream=null; }
+}
+function openResetVerifikasi(){
+  if(!isPengurus())return;
+  resetState={faceOk:false,photoData:''};
+  openSheet(`<button class="close-x" onclick="closeSheet()">×</button>
+  <h3 style="margin:0 0 4px;color:var(--terra)">⚠️ Verifikasi Sebelum Hapus</h3>
+  <p class="meta" style="margin:0 0 14px">Masukkan ulang password admin dan ambil foto wajah untuk melanjutkan. Kejadian ini akan tercatat di riwayat.</p>
+  <label style="font-size:11.5px;color:var(--muted)">Password Admin</label>
+  <div style="position:relative">
+    <input class="field" id="resetPass" type="password" placeholder="Password admin" oninput="updateResetSubmitState()" style="padding-right:42px">
+    <button type="button" onclick="toggleResetPassVisibility()" style="position:absolute;right:2px;top:0;height:100%;width:38px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px">👁</button>
+  </div>
+  <label style="font-size:11.5px;color:var(--muted);margin-top:12px;display:block">Foto Wajah (wajib)</label>
+  <div id="resetCamBox" style="margin-top:6px"><button type="button" class="btn-ghost" onclick="startResetCamera()">📷 Buka Kamera</button></div>
+  <div id="resetFotoPreview" style="margin-top:10px"></div>
+  <div id="resetFaceStatus" class="meta" style="margin-top:6px"></div>
+  <button class="btn-primary" id="resetSubmitBtn" disabled style="margin-top:16px;background:var(--terra)" onclick="prosesResetData()">🗑 Hapus Semua Data</button>`);
+}
+function toggleResetPassVisibility(){
+  const f=document.getElementById('resetPass'); const btn=event.currentTarget;
+  const show=f.type==='password'; f.type=show?'text':'password'; btn.textContent=show?'🙈':'👁';
+}
+function showResetCamFallback(msg){
+  const box=document.getElementById('resetCamBox'); if(!box)return;
+  box.innerHTML=`<div class="meta" style="color:var(--terra);margin-bottom:8px;line-height:1.5">${msg}<br>Pastikan portal dibuka lewat browser (Chrome/Safari), bukan dari pratinjau file di dalam aplikasi chat, dan izinkan akses kamera. Atau coba tombol di bawah:</div>
+  <label class="btn-ghost" style="display:block;text-align:center;cursor:pointer;position:relative">📷 Ambil Foto dengan Kamera HP
+    <input type="file" accept="image/*" capture="user" onchange="handleResetFoto(this)" style="position:absolute;left:0;top:0;width:100%;height:100%;opacity:0;cursor:pointer">
+  </label>`;
+}
+async function startResetCamera(){
+  const box=document.getElementById('resetCamBox');
+  const statusEl=document.getElementById('resetFaceStatus');
+  if(statusEl) statusEl.textContent='';
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    showResetCamFallback('Kamera langsung tidak didukung di tampilan ini.');
+    return;
+  }
+  try{
+    stopResetCamera();
+    resetStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:720},height:{ideal:720}},audio:false});
+    box.innerHTML=`<video id="resetVideo" autoplay playsinline muted style="width:100%;max-width:260px;border-radius:12px;display:block;margin:0 auto;transform:scaleX(-1);background:#000"></video>
+      <button type="button" class="btn-primary" style="margin-top:10px" onclick="captureResetPhoto()">📸 Ambil Foto</button>`;
+    const v=document.getElementById('resetVideo'); v.srcObject=resetStream;
+    try{ await v.play(); }catch(e){}
+  }catch(e){
+    stopResetCamera();
+    const alasan=(e&&e.name==='NotAllowedError')?'Izin kamera ditolak.':'Kamera tidak bisa dibuka.';
+    showResetCamFallback(alasan);
+  }
+}
+async function captureResetPhoto(){
+  const v=document.getElementById('resetVideo');
+  if(!v||!v.videoWidth){alert('Kamera belum siap, tunggu sebentar lalu coba lagi.');return;}
+  const c=document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight;
+  const ctx=c.getContext('2d'); ctx.translate(c.width,0); ctx.scale(-1,1); ctx.drawImage(v,0,0,c.width,c.height);
+  const data=c.toDataURL('image/jpeg',0.8);
+  stopResetCamera();
+  document.getElementById('resetCamBox').innerHTML='<button type="button" class="btn-ghost" onclick="startResetCamera()">🔄 Foto Ulang</button>';
+  await processResetPhoto(data);
+}
+async function handleResetFoto(input){
+  const file=input.files[0]; if(!file)return;
+  const data=await readFile(file); if(!data)return;
+  const box=document.getElementById('resetCamBox');
+  if(box) box.innerHTML='<button type="button" class="btn-ghost" onclick="startResetCamera()">🔄 Foto Ulang</button>';
+  await processResetPhoto(data);
+}
+async function processResetPhoto(data){
+  resetState.photoData=data; resetState.faceOk=false;
+  document.getElementById('resetFotoPreview').innerHTML=`<img src="${data}" style="width:120px;height:120px;border-radius:10px;object-fit:cover;display:block;margin:0 auto">`;
+  const statusEl=document.getElementById('resetFaceStatus');
+  statusEl.style.color='var(--muted)'; statusEl.textContent='Memuat sistem deteksi wajah…';
+  updateResetSubmitState();
+  const modelReady=await ensureFaceModels();
+  if(!modelReady){
+    resetState.faceOk=false;
+    statusEl.style.color='var(--terra)'; statusEl.textContent='❌ Gagal memuat sistem deteksi wajah. Pastikan HP terhubung internet, lalu coba lagi.';
+    updateResetSubmitState(); return;
+  }
+  statusEl.textContent='Memeriksa wajah…';
+  try{
+    const img=new Image(); img.src=data; await img.decode();
+    const detection=await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions());
+    if(detection){
+      resetState.faceOk=true;
+      statusEl.style.color='var(--primary)'; statusEl.textContent='✅ Wajah terdeteksi.';
+    } else {
+      resetState.faceOk=false;
+      statusEl.style.color='var(--terra)'; statusEl.textContent='❌ Wajah tidak terdeteksi. Pastikan wajah terlihat jelas & pencahayaan cukup, lalu foto ulang.';
+    }
+  }catch(e){
+    resetState.faceOk=false;
+    statusEl.style.color='var(--terra)'; statusEl.textContent='❌ Gagal memeriksa wajah, coba foto ulang.';
+  }
+  updateResetSubmitState();
+}
+function updateResetSubmitState(){
+  const pass=(document.getElementById('resetPass')||{}).value||'';
+  const btn=document.getElementById('resetSubmitBtn');
+  if(!btn)return;
+  btn.disabled=!(pass.trim() && resetState.faceOk && resetState.photoData);
+}
+function prosesResetData(){
+  const pass=(document.getElementById('resetPass').value||'').trim();
+  if(pass.toUpperCase()!=='AIS2026'){alert('Password admin salah.');return;}
+  if(!resetState.faceOk || !resetState.photoData){alert('Verifikasi wajah belum berhasil.');return;}
+  if(!confirm('Konfirmasi terakhir — SEMUA data akan dihapus permanen dan tidak bisa dikembalikan. Lanjutkan?'))return;
+  tambahHapusLog(resetState.photoData);
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem('ais_blokd_v2');
+  location.reload();
+}
+function openAkunWarga(){
+  if(!isPengurus()){alert('Hanya Pengurus yang dapat melihat akun warga.');return;}
+  ensureAccounts();
+  const rows=warga.filter(w=>w.status==='dihuni'&&w.nama).map(w=>`<div class="card" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><b>${esc(w.nama)}</b><div class="meta">Rumah ${esc(w.no)}</div><div style="margin-top:8px;font-size:12px">Username: <b>${esc(w.akun.username)}</b><br>Password: <b>${esc(w.akun.password)}</b></div></div><button class="btn-ghost" style="width:auto;padding:8px 10px" onclick="resetAkunWarga('${w.no}')">Reset Password</button></div></div>`).join('');
+  openSheet(`<button class="close-x" onclick="closeSheet()">×</button><h3 style="margin:0 0 6px">Akun Login Warga</h3><p class="meta">Setiap warga yang didaftarkan mendapat username dan password unik. Pengurus dapat melihat atau mereset password jika warga lupa.</p>${rows||'<div class="empty">Belum ada data warga yang memiliki akun.</div>'}`);
+}
+function resetAkunWarga(no){
+  if(!isPengurus())return;
+  const w=warga.find(x=>x.no===no); if(!w||!w.akun)return;
+  w.akun.password=makePassword(); w.akun.diubah=new Date().toISOString().slice(0,10);
+  saveData(); openAkunWarga();
+  alert('Password baru untuk '+w.nama+' ('+w.no+') adalah: '+w.akun.password);
+}
+function downloadExcel(){
+  if(!isPengurus()){alert('Hanya Pengurus yang dapat mengunduh data.');return;}
+  if(!window.XLSX){ alert('Modul Excel belum termuat (butuh koneksi internet). Coba lagi.'); return; }
+  const wb=XLSX.utils.book_new();
+  const totalMasuk=keuangan.filter(t=>t.jenis==='masuk').reduce((a,t)=>a+t.jumlah,0);
+  const totalKeluar=keuangan.filter(t=>t.jenis==='keluar').reduce((a,t)=>a+t.jumlah,0);
+  const semuaKode=allBlokCodes();
+  const lunas=warga.filter(w=>w.iuran&&w.iuran[3]==='lunas').length;
+  const wajibIuran=warga.filter(w=>w.iuran&&w.iuran[3]!=='-').length;
+  const ringkasan=[
+    {Keterangan:'Total Pemasukan (Rp)',Nilai:totalMasuk},
+    {Keterangan:'Total Pengeluaran (Rp)',Nilai:totalKeluar},
+    {Keterangan:'Saldo Kas (Rp)',Nilai:totalMasuk-totalKeluar},
+    {Keterangan:'Rumah Milik Pribadi (dihuni)',Nilai:warga.filter(w=>w.status==='dihuni'&&w.kepemilikan==='milik').length},
+    {Keterangan:'Rumah Ngontrak (dihuni)',Nilai:warga.filter(w=>w.status==='dihuni'&&w.kepemilikan==='sewa').length},
+    {Keterangan:'Rumah Kosong - Ada Pemilik',Nilai:warga.filter(w=>w.status==='kosong-pemilik').length},
+    {Keterangan:'Rumah Kosong - Belum Ada Pemilik',Nilai:warga.filter(w=>w.status==='kosong-belum').length},
+    {Keterangan:'Total Unit Tercatat di Sistem',Nilai:warga.length},
+    {Keterangan:'Total Unit di Komplek (D1,D2,D3,D5)',Nilai:semuaKode.length},
+    {Keterangan:'Rumah Lunas Iuran Bulan Ini',Nilai:lunas+' dari '+wajibIuran},
+    {Keterangan:'Jumlah Aspirasi Masuk',Nilai:aspirasi.length},
+    {Keterangan:'Tanggal Export',Nilai:new Date().toISOString().slice(0,10)},
+  ];
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(ringkasan),'Ringkasan');
+  const keuanganRows=[...keuangan].sort((a,b)=>a.tgl.localeCompare(b.tgl)).map(t=>({
+    Tanggal:t.tgl,Jenis:t.jenis==='masuk'?'Pemasukan':'Pengeluaran',Keterangan:t.judul,'Jumlah (Rp)':t.jumlah,Catatan:t.catatan||''
+  }));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(keuanganRows),'Keuangan');
+  const aspirasiRows=aspirasi.map(a=>({
+    Tanggal:a.tgl,Pengirim:a.nama,Isi:a.isi,'Jumlah Setuju':a.up,'Jumlah Tidak Setuju':a.down,
+    'Nama yang Setuju':(a.setujuNama||[]).join(', '),'Nama yang Tidak Setuju':(a.tidakNama||[]).join(', ')
+  }));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(aspirasiRows),'Aspirasi Warga');
+  const wargaRows=semuaKode.map(no=>{
+    const w=warga.find(x=>x.no===no);
+    if(!w) return {'No Rumah':no,'Status':'Belum ada data','Kepemilikan':'-','Nama Penghuni':'-','No HP Penghuni':'-','Pemilik':'-','No HP Pemilik':'-','Iuran Jun':'-','Iuran Jul':'-','Iuran Ags':'-','Iuran Sep':'-'};
+    return {
+      'No Rumah':w.no,
+      'Status':w.status==='dihuni'?'Dihuni':w.status==='kosong-pemilik'?'Kosong - Ada Pemilik':'Kosong - Belum Ada Pemilik',
+      'Kepemilikan':w.status==='dihuni'?(w.kepemilikan==='sewa'?'Ngontrak':'Milik Pribadi'):'-',
+      'Nama Penghuni':w.nama||'-','No HP Penghuni':w.telp||'-',
+      'Pemilik':w.pemilik||'-','No HP Pemilik':w.telpPemilik||'-',
+      ['Iuran '+(bulan[0]||'1')]:(w.iuran&&w.iuran[0])||'-',['Iuran '+(bulan[1]||'2')]:(w.iuran&&w.iuran[1])||'-',
+      ['Iuran '+(bulan[2]||'3')]:(w.iuran&&w.iuran[2])||'-',['Iuran '+(bulan[3]||'4')]:(w.iuran&&w.iuran[3])||'-',
+    };
+  });
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(wargaRows),'Data Warga');
+  XLSX.writeFile(wb,'Data-AlamIndahSelaras-BlokD-'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+function toggleTagihanNotif(){localStorage.setItem('ais_tagihan_notif',localStorage.getItem('ais_tagihan_notif')==='0'?'1':'0');renderProfil();}
+function toggleTheme(){theme=(theme==='dark'?'light':'dark');applyTheme();saveData();renderProfil();}
+function logout(){session={name:'',rumah:'',role:'warga'}; document.getElementById('loginUser').value=''; document.getElementById('loginPass').value=''; document.getElementById('loginRumah').value=''; document.getElementById('app').classList.add('hide');document.getElementById('login').classList.remove('hide');}
+
+function renderAll(){renderBeranda();renderIuran();renderInfo();renderWarga();renderNotifikasi();renderProfil();updateNotifBadge();saveData();}
+
+/* ---------------- notifikasi (khusus pengurus) ---------------- */
+function updateNotifBadge(){
+  const dot=document.getElementById('notifDot'); if(!dot)return;
+  const c=notifikasi.filter(n=>!n.read).length;
+  dot.textContent=c>0?c:''; dot.style.display=c>0?'inline-block':'none';
+}
+function markRead(id){if(!isPengurus())return;const n=notifikasi.find(x=>x.id===id); if(n)n.read=true; saveData(); renderNotifikasi(); updateNotifBadge();}
+function resolveNotif(id,approve){
+  if(!isPengurus()){alert('Hanya Pengurus yang dapat memverifikasi notifikasi.');return;}
+  const n=notifikasi.find(x=>x.id===id); if(!n)return;
+  if(approve){
+    const w=warga.find(x=>x.no===n.rumah);
+    if(w){ const idx=bulan.indexOf(n.bulan); if(idx>-1) w.iuran[idx]='lunas'; }
+    n.hasil='verif';
+  } else { const w=warga.find(x=>x.no===n.rumah); if(w){const idx=bulan.indexOf(n.bulan);if(idx>-1)w.iuran[idx]='belum';} n.hasil='tolak'; }
+  n.read=true;
+  saveData();
+  renderNotifikasi(); renderIuran(); renderBeranda(); updateNotifBadge();
+}
+function lihatBerita(id){
+  infoView='berita';
+  document.querySelectorAll('#tabbar button').forEach(x=>x.classList.toggle('active',x.dataset.t==='info'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.id==='tab-info'));
+  renderInfo();
+}
+function notifItem(n){
+  if(n.type==='bayar'){
+    return `<div class="item">
+      <b>Konfirmasi pembayaran — Rumah ${n.rumah}</b>
+      <div class="meta">${esc(n.nama)} mengonfirmasi bayar iuran bulan ${n.bulan} · ${n.tgl}</div>
+      ${n.read?`<div class="meta" style="margin-top:6px;color:${n.hasil==='verif'?'var(--primary)':'var(--terra)'}">${n.hasil==='verif'?'✓ Sudah diverifikasi':'✕ Ditolak'}</div>`
+      :`<div class="contact-row" style="margin-top:8px">
+        <button class="contact-call" onclick="resolveNotif('${n.id}',true)">✅ Verifikasi</button>
+        <button class="contact-reject" onclick="resolveNotif('${n.id}',false)">✕ Tolak</button>
+      </div>`}
+    </div>`;
+  }
+  return `<div class="item">
+    <b>Berita baru — menunggu persetujuan</b>
+    <div class="meta">${esc(n.penulis)} mengirim: "${esc(n.judul)}" · ${n.tgl}</div>
+    ${n.read?`<div class="meta" style="margin-top:6px;color:${n.hasil==='terbit'?'var(--primary)':'var(--terra)'}">${n.hasil==='terbit'?'✓ Sudah dipublikasikan':'✕ Ditolak'}</div>`
+    :`<div class="contact-row" style="margin-top:8px">
+      <button class="contact-call" onclick="lihatBerita('${n.id}')">📰 Tinjau &amp; putuskan</button>
+    </div>`}
+  </div>`;
+}
+function renderNotifikasi(){
+  const el=document.getElementById('tab-notif'); if(!el)return;
+  const list=[...notifikasi].sort((a,b)=>(a.read?1:0)-(b.read?1:0));
+  el.innerHTML=`<div class="section-title">Notifikasi pengurus</div>
+  <div class="card">${list.map(notifItem).join('')||'<div class="empty">Belum ada notifikasi</div>'}</div>`;
+}
+</script>
+</body>
+</html>

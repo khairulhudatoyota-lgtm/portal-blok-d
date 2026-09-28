@@ -1,0 +1,17 @@
+{
+  "name": "Portal Warga Alam Indah Selaras Blok D",
+  "short_name": "Alam Indah Selaras",
+  "description": "Portal warga Perumahan Alam Indah Selaras Blok D: kas, iuran, pengumuman, berita, dan susunan pengurus.",
+  "lang": "id",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#2F5233",
+  "theme_color": "#2F5233",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
