@@ -16,6 +16,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
 <style>
 :root{
@@ -246,6 +249,87 @@ let session={name:'',rumah:'',role:'warga'};
 let notifikasi=[
 ];
 let theme='auto';
+let pengurusList=[
+  {id:'ketua',jabatan:'Ketua',nama:'',telp:'',foto:''},
+  {id:'wakil-ketua',jabatan:'Wakil Ketua',nama:'',telp:'',foto:''},
+  {id:'bendahara-1',jabatan:'Bendahara 1',nama:'',telp:'',foto:''},
+  {id:'bendahara-2',jabatan:'Bendahara 2',nama:'',telp:'',foto:''},
+  {id:'sekretaris-1',jabatan:'Sekretaris 1',nama:'',telp:'',foto:''},
+  {id:'sekretaris-2',jabatan:'Sekretaris 2',nama:'',telp:'',foto:''},
+  {id:'agama-1',jabatan:'Seksi Agama 1',nama:'',telp:'',foto:''},
+  {id:'agama-2',jabatan:'Seksi Agama 2',nama:'',telp:'',foto:''},
+  {id:'pembangunan-1',jabatan:'Seksi Pembangunan 1',nama:'',telp:'',foto:''},
+  {id:'pembangunan-2',jabatan:'Seksi Pembangunan 2',nama:'',telp:'',foto:''},
+  {id:'olahraga-1',jabatan:'Seksi Olahraga 1',nama:'',telp:'',foto:''},
+  {id:'olahraga-2',jabatan:'Seksi Olahraga 2',nama:'',telp:'',foto:''},
+  {id:'teknologi-1',jabatan:'Seksi Teknologi 1',nama:'',telp:'',foto:''},
+  {id:'teknologi-2',jabatan:'Seksi Teknologi 2',nama:'',telp:'',foto:''},
+  {id:'keamanan-1',jabatan:'Seksi Keamanan 1',nama:'',telp:'',foto:''},
+  {id:'keamanan-2',jabatan:'Seksi Keamanan 2',nama:'',telp:'',foto:''},
+  {id:'lingkungan-1',jabatan:'Seksi Lingkungan 1',nama:'',telp:'',foto:''},
+  {id:'lingkungan-2',jabatan:'Seksi Lingkungan 2',nama:'',telp:'',foto:''},
+];
+
+/* ---------------- Firebase ---------------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyCpcWOuYLH7Y9zql1HVltWGbbvKThtRIm0",
+  authDomain: "portal-blok-d.firebaseapp.com",
+  projectId: "portal-blok-d",
+  storageBucket: "portal-blok-d.firebasestorage.app",
+  messagingSenderId: "366218347704",
+  appId: "1:366218347704:web:aa381376420f33c6d5604d"
+};
+firebase.initializeApp(firebaseConfig);
+const fbAuth = firebase.auth();
+const fbDb = firebase.firestore();
+const ADMIN_UID = "bAorVvPEw6NiQSzI1RKYuRQ26Wr1";
+const STATE_DOC = fbDb.collection('state').doc('main');
+let remoteApplyGuard = false;
+let pushTimer = null;
+
+fbAuth.onAuthStateChanged(user=>{
+  if(!user){ fbAuth.signInAnonymously().catch(e=>console.warn('Gagal masuk anonim:', e)); }
+});
+
+function applyLoadedBlob(d){
+  if(Array.isArray(d.keuangan))keuangan=d.keuangan;
+  if(Array.isArray(d.pengumuman))pengumuman=d.pengumuman;
+  if(Array.isArray(d.berita))berita=d.berita;
+  if(Array.isArray(d.aspirasi))aspirasi=d.aspirasi;
+  if(Array.isArray(d.warga))warga=d.warga;
+  if(Array.isArray(d.notifikasi))notifikasi=d.notifikasi;
+  if(Array.isArray(d.pengurusList)){
+    d.pengurusList.forEach(saved=>{const p=pengurusList.find(x=>x.id===saved.id); if(p) Object.assign(p,saved);});
+  }
+  if(d.theme)theme=d.theme;
+  aspirasi.forEach(a=>{ if(!a.votes)a.votes={}; delete a.my; });
+  notifikasi.forEach(n=>{ if(n.type==='bayar' && n.hasil===null){ const w=warga.find(x=>x.no===n.rumah); const idx=w&&Array.isArray(w.iuran)?bulan.indexOf(n.bulan):-1; if(w&&idx>-1&&w.iuran[idx]==='belum')w.iuran[idx]='menunggu'; }});
+}
+function startRealtimeSync(){
+  STATE_DOC.onSnapshot(snap=>{
+    if(!snap.exists) return;
+    remoteApplyGuard=true;
+    applyLoadedBlob(snap.data());
+    applyTheme();
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(snap.data())); }catch(e){}
+    const appEl=document.getElementById('app');
+    if(appEl && !appEl.classList.contains('hide')) renderAll();
+    remoteApplyGuard=false;
+  }, err=>{
+    console.warn('Sinkron real-time gagal:', err);
+    const s=document.getElementById('statusLine'); if(s) s.textContent='⚠️ Tidak tersambung ke server: '+err.message;
+  });
+}
+function pushToFirestore(){
+  clearTimeout(pushTimer);
+  pushTimer=setTimeout(()=>{
+    const payload=JSON.parse(JSON.stringify({keuangan,pengumuman,berita,aspirasi,warga,notifikasi,pengurusList,theme,updatedAt:new Date().toISOString()}));
+    STATE_DOC.set(payload).catch(err=>{
+      console.warn('Gagal simpan online:', err);
+      alert('Gagal menyimpan ke server online: '+err.message+'\nData sementara hanya tersimpan di HP ini.');
+    });
+  }, 400);
+}
 
 /* ---------------- penyimpanan & helper keamanan V12 ---------------- */
 const STORAGE_KEY='ais_blokd_v3';
@@ -256,39 +340,26 @@ function applyTheme(){
   document.documentElement.dataset.theme=theme==='dark'?'dark':theme==='light'?'light':'';
 }
 function saveData(){
+  if(remoteApplyGuard) return true;
   try{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({keuangan,pengumuman,berita,aspirasi,warga,notifikasi,pengurusList,theme,version:12}));
-    return true;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({keuangan,pengumuman,berita,aspirasi,warga,notifikasi,pengurusList,theme,version:13}));
   }catch(e){
-    console.warn('Data belum tersimpan:',e);
-    alert('Penyimpanan penuh. Kurangi ukuran foto/dokumen atau hapus data lama.');
-    return false;
+    console.warn('Data lokal belum tersimpan:',e);
   }
+  pushToFirestore();
+  return true;
 }
 function loadData(){
   try{
     const raw=localStorage.getItem(STORAGE_KEY) || localStorage.getItem('ais_blokd_v2');
     if(!raw){applyTheme();return;}
-    const d=JSON.parse(raw);
-    if(Array.isArray(d.keuangan))keuangan=d.keuangan;
-    if(Array.isArray(d.pengumuman))pengumuman=d.pengumuman;
-    if(Array.isArray(d.berita))berita=d.berita;
-    if(Array.isArray(d.aspirasi))aspirasi=d.aspirasi;
-    if(Array.isArray(d.warga))warga=d.warga;
-    if(Array.isArray(d.notifikasi))notifikasi=d.notifikasi;
-    if(Array.isArray(d.pengurusList)){
-      // Gabungkan data tersimpan dengan daftar jabatan baku (jaga-jaga ada jabatan baru di versi mendatang)
-      d.pengurusList.forEach(saved=>{const p=pengurusList.find(x=>x.id===saved.id); if(p) Object.assign(p,saved);});
-    }
-    if(d.theme)theme=d.theme;
-    // Migrasi voting lama: status vote tidak lagi disimpan di a.my.
-    aspirasi.forEach(a=>{ if(!a.votes)a.votes={}; delete a.my; });
-    notifikasi.forEach(n=>{ if(n.type==='bayar' && n.hasil===null){ const w=warga.find(x=>x.no===n.rumah); const idx=w&&Array.isArray(w.iuran)?bulan.indexOf(n.bulan):-1; if(w&&idx>-1&&w.iuran[idx]==='belum')w.iuran[idx]='menunggu'; }});
+    applyLoadedBlob(JSON.parse(raw));
     applyTheme();
   }catch(e){ console.warn('Data lokal tidak dapat dibaca:',e); }
 }
 loadData();
 ensureAccounts();
+startRealtimeSync();
 
 /* ---------------- login ---------------- */
 document.getElementById('pickWarga').onclick=()=>selRole('warga');
@@ -307,23 +378,28 @@ function doLogin(){
   const rumah=document.getElementById('loginRumah').value.trim().toUpperCase();
   if(!user || !pass){ alert('Username dan password wajib diisi.'); return; }
 
-  // MASTER ADMIN = bypass pilihan mode login.
-  // Admin selalu masuk sebagai Pengurus, baik tombol "Saya Warga" maupun
-  // "Saya Pengurus" yang sedang terpilih, dan nomor rumah boleh kosong/diisi.
   const u=user.normalize('NFKC').trim().toLowerCase();
   const p=pass.normalize('NFKC').trim();
-  const isMasterAdmin=(u==='admin' && p.toUpperCase()==='AIS2026');
 
-  if(isMasterAdmin){
-    session={name:'Administrator Pengurus',rumah:'',role:'pengurus'};
-  } else if(session.role==='pengurus'){
-    alert('Username atau password pengurus salah. Gunakan akun Admin.'); return;
-  } else {
-    ensureAccounts();
-    const w=warga.find(x=>x.akun && String(x.akun.username||'').normalize('NFKC').trim().toLowerCase()===u && String(x.akun.password||'').normalize('NFKC').trim()===p);
-    if(!w){ alert('Username atau password warga salah. Minta Pengurus melihat atau reset akun warga kamu.'); return; }
-    session.name=w.nama || ('Warga '+w.no); session.rumah=w.no; session.role='warga';
+  if(u==='admin'){
+    fbAuth.signInWithEmailAndPassword('admin@blokd.app', pass).then(()=>{
+      session={name:'Administrator Pengurus',rumah:'',role:'pengurus'};
+      finishLogin();
+    }).catch(err=>{
+      alert('Password admin salah, atau koneksi internet bermasalah.\n('+err.message+')');
+    });
+    return;
   }
+  if(session.role==='pengurus'){
+    alert('Username atau password pengurus salah. Gunakan akun Admin.'); return;
+  }
+  ensureAccounts();
+  const w=warga.find(x=>x.akun && String(x.akun.username||'').normalize('NFKC').trim().toLowerCase()===u && String(x.akun.password||'').normalize('NFKC').trim()===p);
+  if(!w){ alert('Username atau password warga salah. Minta Pengurus melihat atau reset akun warga kamu.'); return; }
+  session.name=w.nama || ('Warga '+w.no); session.rumah=w.no; session.role='warga';
+  finishLogin();
+}
+function finishLogin(){
   document.getElementById('login').classList.add('hide');
   document.getElementById('app').classList.remove('hide');
   document.getElementById('roleTag').textContent=session.role==='pengurus'?'Pengurus':'Warga';
@@ -557,26 +633,6 @@ function toggleIuran(wi,si){
 /* ---------------- info: berita / pengumuman / aspirasi ---------------- */
 let infoView='berita';
 function setInfoView(v){infoView=v;renderInfo();}
-let pengurusList=[
-  {id:'ketua',jabatan:'Ketua',nama:'',telp:'',foto:''},
-  {id:'wakil-ketua',jabatan:'Wakil Ketua',nama:'',telp:'',foto:''},
-  {id:'bendahara-1',jabatan:'Bendahara 1',nama:'',telp:'',foto:''},
-  {id:'bendahara-2',jabatan:'Bendahara 2',nama:'',telp:'',foto:''},
-  {id:'sekretaris-1',jabatan:'Sekretaris 1',nama:'',telp:'',foto:''},
-  {id:'sekretaris-2',jabatan:'Sekretaris 2',nama:'',telp:'',foto:''},
-  {id:'agama-1',jabatan:'Seksi Agama 1',nama:'',telp:'',foto:''},
-  {id:'agama-2',jabatan:'Seksi Agama 2',nama:'',telp:'',foto:''},
-  {id:'pembangunan-1',jabatan:'Seksi Pembangunan 1',nama:'',telp:'',foto:''},
-  {id:'pembangunan-2',jabatan:'Seksi Pembangunan 2',nama:'',telp:'',foto:''},
-  {id:'olahraga-1',jabatan:'Seksi Olahraga 1',nama:'',telp:'',foto:''},
-  {id:'olahraga-2',jabatan:'Seksi Olahraga 2',nama:'',telp:'',foto:''},
-  {id:'teknologi-1',jabatan:'Seksi Teknologi 1',nama:'',telp:'',foto:''},
-  {id:'teknologi-2',jabatan:'Seksi Teknologi 2',nama:'',telp:'',foto:''},
-  {id:'keamanan-1',jabatan:'Seksi Keamanan 1',nama:'',telp:'',foto:''},
-  {id:'keamanan-2',jabatan:'Seksi Keamanan 2',nama:'',telp:'',foto:''},
-  {id:'lingkungan-1',jabatan:'Seksi Lingkungan 1',nama:'',telp:'',foto:''},
-  {id:'lingkungan-2',jabatan:'Seksi Lingkungan 2',nama:'',telp:'',foto:''},
-];
 function pengurusInitial(nama){return (nama||'?').trim()[0]?.toUpperCase()||'?';}
 function renderPengurusList(){
   return `<p style="font-size:12px;color:var(--muted);margin:2px 0 12px">Susunan Pengurus Paguyuban Blok D. ${isPengurus()?'Tap salah satu untuk mengisi/mengubah nama, foto, atau nomor HP.':'Tap untuk melihat kontak.'}</p>
@@ -1066,29 +1122,46 @@ async function ensureFaceModels(){
     return true;
   }catch(e){ return false; }
 }
-const HAPUS_LOG_KEY='ais_hapus_log_v1';
-function getHapusLog(){
-  let arr=[]; try{arr=JSON.parse(localStorage.getItem(HAPUS_LOG_KEY)||'[]');}catch(e){arr=[];}
-  const now=new Date();
-  const fresh=arr.filter(e=>{const d=new Date(e.tgl+'T00:00:00');if(isNaN(d))return false;return (now-d)/86400000<=366;});
-  if(fresh.length!==arr.length) localStorage.setItem(HAPUS_LOG_KEY, JSON.stringify(fresh));
-  return fresh;
+function getHapusLogRemote(){
+  return fbDb.collection('riwayat_hapus').orderBy('tgl','desc').limit(100).get().then(snap=>{
+    const now=new Date();
+    const list=[];
+    snap.forEach(doc=>{
+      const e=doc.data();
+      const d=new Date((e.tgl||'')+'T00:00:00');
+      if(!isNaN(d) && (now-d)/86400000<=366) list.push(e);
+    });
+    return list;
+  }).catch(err=>{ console.warn('Gagal memuat riwayat hapus:',err); return null; });
 }
-function tambahHapusLog(foto){
-  const log=getHapusLog();
-  log.unshift({tgl:new Date().toISOString().slice(0,10),jam:new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}),foto});
-  localStorage.setItem(HAPUS_LOG_KEY, JSON.stringify(log));
+function tambahHapusLogRemote(foto){
+  return fbDb.collection('riwayat_hapus').add({
+    tgl:new Date().toISOString().slice(0,10),
+    jam:new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}),
+    foto
+  });
 }
 function openRiwayatHapus(){
   if(!isPengurus())return;
-  const log=getHapusLog();
   openSheet(`<button class="close-x" onclick="closeSheet()">×</button>
   <h3 style="margin:0 0 4px">Riwayat Penghapusan Data</h3>
-  <p class="meta" style="margin:0 0 12px">Tercatat otomatis setiap kali Reset Data Aplikasi dilakukan. Riwayat lebih dari 1 tahun terhapus otomatis.</p>
-  ${log.length?log.map(e=>`<div class="item" style="display:flex;gap:12px;align-items:center">
-    <img src="${e.foto}" style="width:52px;height:52px;border-radius:8px;object-fit:cover;flex-shrink:0">
-    <div><b style="font-size:13px">${e.tgl}</b><div class="meta">Pukul ${e.jam||'-'}</div></div>
-  </div>`).join(''):'<div class="empty">Belum ada riwayat penghapusan.</div>'}`);
+  <p class="meta" style="margin:0 0 12px">Tercatat otomatis setiap kali Reset Data Aplikasi dilakukan, tersimpan online. Riwayat lebih dari 1 tahun terhapus otomatis.</p>
+  <div class="empty">Memuat riwayat…</div>`);
+  getHapusLogRemote().then(log=>{
+    if(log===null){
+      openSheet(`<button class="close-x" onclick="closeSheet()">×</button>
+      <h3 style="margin:0 0 4px">Riwayat Penghapusan Data</h3>
+      <div class="empty">Gagal memuat riwayat. Cek koneksi internet lalu coba lagi.</div>`);
+      return;
+    }
+    openSheet(`<button class="close-x" onclick="closeSheet()">×</button>
+    <h3 style="margin:0 0 4px">Riwayat Penghapusan Data</h3>
+    <p class="meta" style="margin:0 0 12px">Tercatat otomatis setiap kali Reset Data Aplikasi dilakukan, tersimpan online. Riwayat lebih dari 1 tahun terhapus otomatis.</p>
+    ${log.length?log.map(e=>`<div class="item" style="display:flex;gap:12px;align-items:center">
+      <img src="${e.foto}" style="width:52px;height:52px;border-radius:8px;object-fit:cover;flex-shrink:0">
+      <div><b style="font-size:13px">${e.tgl}</b><div class="meta">Pukul ${e.jam||'-'}</div></div>
+    </div>`).join(''):'<div class="empty">Belum ada riwayat penghapusan.</div>'}`);
+  });
 }
 let resetStream=null;
 function stopResetCamera(){
@@ -1195,12 +1268,35 @@ function updateResetSubmitState(){
   if(!btn)return;
   btn.disabled=!(pass.trim() && resetState.faceOk && resetState.photoData);
 }
-function prosesResetData(){
+async function prosesResetData(){
   const pass=(document.getElementById('resetPass').value||'').trim();
-  if(pass.toUpperCase()!=='AIS2026'){alert('Password admin salah.');return;}
   if(!resetState.faceOk || !resetState.photoData){alert('Verifikasi wajah belum berhasil.');return;}
-  if(!confirm('Konfirmasi terakhir — SEMUA data akan dihapus permanen dan tidak bisa dikembalikan. Lanjutkan?'))return;
-  tambahHapusLog(resetState.photoData);
+  const btn=document.getElementById('resetSubmitBtn');
+  const user=fbAuth.currentUser;
+  if(!user || !user.email){ alert('Sesi admin tidak valid. Tutup form ini dan login ulang sebagai Admin.'); return; }
+  btn.disabled=true; btn.textContent='Memeriksa password…';
+  try{
+    const cred=firebase.auth.EmailAuthProvider.credential(user.email, pass);
+    await user.reauthenticateWithCredential(cred);
+  }catch(e){
+    alert('Password admin salah.');
+    btn.disabled=false; btn.textContent='🗑 Hapus Semua Data';
+    return;
+  }
+  if(!confirm('Konfirmasi terakhir — SEMUA data akan dihapus permanen dan tidak bisa dikembalikan. Lanjutkan?')){
+    btn.disabled=false; btn.textContent='🗑 Hapus Semua Data';
+    return;
+  }
+  btn.textContent='Menghapus…';
+  try{
+    await tambahHapusLogRemote(resetState.photoData);
+    const kosong=pengurusList.map(p=>({id:p.id,jabatan:p.jabatan,nama:'',telp:'',foto:''}));
+    await STATE_DOC.set({keuangan:[],pengumuman:[],berita:[],aspirasi:[],warga:[],notifikasi:[],pengurusList:kosong,theme,updatedAt:new Date().toISOString()});
+  }catch(e){
+    alert('Gagal menghapus data online: '+e.message);
+    btn.disabled=false; btn.textContent='🗑 Hapus Semua Data';
+    return;
+  }
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem('ais_blokd_v2');
   location.reload();
@@ -1269,7 +1365,15 @@ function downloadExcel(){
 }
 function toggleTagihanNotif(){localStorage.setItem('ais_tagihan_notif',localStorage.getItem('ais_tagihan_notif')==='0'?'1':'0');renderProfil();}
 function toggleTheme(){theme=(theme==='dark'?'light':'dark');applyTheme();saveData();renderProfil();}
-function logout(){session={name:'',rumah:'',role:'warga'}; document.getElementById('loginUser').value=''; document.getElementById('loginPass').value=''; document.getElementById('loginRumah').value=''; document.getElementById('app').classList.add('hide');document.getElementById('login').classList.remove('hide');}
+function logout(){
+  fbAuth.signOut().finally(()=>{ fbAuth.signInAnonymously().catch(()=>{}); });
+  session={name:'',rumah:'',role:'warga'};
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
+  document.getElementById('loginRumah').value='';
+  document.getElementById('app').classList.add('hide');
+  document.getElementById('login').classList.remove('hide');
+}
 
 function renderAll(){renderBeranda();renderIuran();renderInfo();renderWarga();renderNotifikasi();renderProfil();updateNotifBadge();saveData();}
 
