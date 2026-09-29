@@ -283,6 +283,7 @@ firebase.initializeApp(firebaseConfig);
 const fbAuth = firebase.auth();
 const fbDb = firebase.firestore();
 const ADMIN_UID = "bAorVvPEw6NiQSzI1RKYuRQ26Wr1";
+const SESSION_KEY = 'ais_session_v1';
 const STATE_DOC = fbDb.collection('state').doc('main');
 let remoteApplyGuard = false;
 let pushTimer = null;
@@ -305,9 +306,54 @@ function applyLoadedBlob(d){
   aspirasi.forEach(a=>{ if(!a.votes)a.votes={}; delete a.my; });
   notifikasi.forEach(n=>{ if(n.type==='bayar' && n.hasil===null){ const w=warga.find(x=>x.no===n.rumah); const idx=w&&Array.isArray(w.iuran)?bulan.indexOf(n.bulan):-1; if(w&&idx>-1&&w.iuran[idx]==='belum')w.iuran[idx]='menunggu'; }});
 }
+let firstSnapshotDone=false;
+function infoNotifOn(){ return localStorage.getItem('ais_info_notif')!=='0'; }
+function playPingSound(){
+  if(!infoNotifOn())return;
+  try{
+    const Ctx=window.AudioContext||window.webkitAudioContext; if(!Ctx)return;
+    const ctx=new Ctx();
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type='sine'; o.frequency.value=880;
+    g.gain.setValueAtTime(0.0001,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.18,ctx.currentTime+0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.4);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime+0.45);
+  }catch(e){}
+}
+function showLocalNotif(title,body){
+  if(!infoNotifOn())return;
+  if('Notification' in window && Notification.permission==='granted'){
+    try{ new Notification(title,{body:(body||'').slice(0,120),icon:'icon-192.png'}); }catch(e){}
+  }
+  playPingSound();
+}
+function mintaIzinNotifikasi(){
+  if(!('Notification' in window)){ alert('Peramban/HP ini tidak mendukung notifikasi.'); return; }
+  Notification.requestPermission().then(p=>{
+    if(p==='granted') alert('Notifikasi diaktifkan. Kamu akan diberi tahu kalau ada pengumuman, berita, atau aspirasi baru selama aplikasi ini terbuka.');
+    else alert('Izin notifikasi belum aktif. Ubah lewat pengaturan browser/HP kalau berubah pikiran.');
+  });
+}
+function toggleInfoNotif(){ localStorage.setItem('ais_info_notif', infoNotifOn()?'0':'1'); renderProfil(); }
+function detectNewItemsAndNotify(newData){
+  if(!firstSnapshotDone){ firstSnapshotDone=true; return; }
+  try{
+    const oldPeng=new Set(pengumuman.map(p=>p.id));
+    (newData.pengumuman||[]).forEach(p=>{ if(p.id && !oldPeng.has(p.id)) showLocalNotif('📢 Pengumuman baru', p.j||''); });
+    const oldBerita=new Set(berita.map(b=>b.id));
+    (newData.berita||[]).forEach(b=>{
+      if(b.id && b.status==='published' && !oldBerita.has(b.id)) showLocalNotif('📰 Berita baru', (b.ai&&b.ai.judul)||b.raw||'');
+    });
+    const oldAsp=new Set(aspirasi.map(a=>a.id));
+    (newData.aspirasi||[]).forEach(a=>{ if(a.id && !oldAsp.has(a.id)) showLocalNotif('💬 Aspirasi baru', a.isi||''); });
+  }catch(e){ console.warn('Gagal memeriksa info baru:',e); }
+}
 function startRealtimeSync(){
   STATE_DOC.onSnapshot(snap=>{
     if(!snap.exists) return;
+    detectNewItemsAndNotify(snap.data());
     remoteApplyGuard=true;
     applyLoadedBlob(snap.data());
     applyTheme();
@@ -360,6 +406,7 @@ function loadData(){
 loadData();
 ensureAccounts();
 startRealtimeSync();
+tryRestoreSession();
 
 /* ---------------- login ---------------- */
 document.getElementById('pickWarga').onclick=()=>selRole('warga');
@@ -400,11 +447,31 @@ function doLogin(){
   finishLogin();
 }
 function finishLogin(){
+  try{ localStorage.setItem(SESSION_KEY, JSON.stringify(session)); }catch(e){}
   document.getElementById('login').classList.add('hide');
   document.getElementById('app').classList.remove('hide');
   document.getElementById('roleTag').textContent=session.role==='pengurus'?'Pengurus':'Warga';
   document.getElementById('navNotif').classList.toggle('hide',session.role!=='pengurus');
   renderAll();
+}
+function tryRestoreSession(){
+  let saved=null;
+  try{ saved=JSON.parse(localStorage.getItem(SESSION_KEY)||'null'); }catch(e){}
+  if(!saved || !saved.role) return;
+  if(saved.role==='warga'){
+    session=saved;
+    finishLogin();
+    return;
+  }
+  if(saved.role==='pengurus'){
+    fbAuth.onAuthStateChanged(user=>{
+      if(session.role==='pengurus') return;
+      if(user && !user.isAnonymous && user.uid===ADMIN_UID){
+        session=saved;
+        finishLogin();
+      }
+    });
+  }
 }
 
 /* ---------------- nav ---------------- */
@@ -851,7 +918,8 @@ function renderDenahReal(){
   d1top.forEach((n,i)=>h+=dgCell(n,17+i,7));
   d1bot.forEach((n,i)=>h+=dgCell(n,17+i,8));
   return `<div class="denah-scroll"><div class="denah-grid">${h}</div></div>
-  <p style="font-size:11px;color:var(--muted);margin:10px 0 0">🟩 Fasilitas umum &amp; olahraga · 🟧 Pos keamanan · geser untuk lihat semua, tap nomor rumah untuk buka datanya.</p>`;
+  <p style="font-size:11px;color:var(--muted);margin:10px 0 6px">🟩 Fasilitas umum &amp; olahraga · 🟧 Pos keamanan · geser untuk lihat semua, tap nomor rumah untuk buka datanya.</p>
+  <div class="legend"><span><i style="background:var(--primary)"></i>Rumah Pribadi</span><span><i style="background:var(--gold)"></i>Ngontrak</span><span><i style="background:var(--info)"></i>Kosong · Ada Pemilik</span><span><i style="background:var(--kosong-bg)"></i>Kosong / Belum Ada Pemilik</span><span><i style="background:var(--belum-bg);border:1px dashed var(--line)"></i>Belum Didata</span></div>`;
 }
 function setDenahMode(m){denahMode=m;renderWarga();}
 function allBlokCodes(){
@@ -1092,7 +1160,7 @@ function renderProfil(){
   const bisaEdit=session.role==='pengurus';
   const ww=warga.find(x=>x.no===session.rumah);
   const akunCard=(!bisaEdit && ww && ww.akun) ?
-    '<div class="card"><h2>Akun Login Saya</h2><div class="setting-row"><span>Username</span><b>'+esc(ww.akun.username)+'</b></div><div class="setting-row"><span>Password</span><b>'+esc(ww.akun.password)+'</b></div><div class="meta" style="margin-top:8px">Simpan data ini. Jika lupa, Pengurus dapat melihat atau membuat password baru.</div></div>' : '';
+    '<div class="card"><h2>Akun Login Saya</h2><div class="setting-row"><span>Username</span><b>'+esc(ww.akun.username)+'</b></div><div class="setting-row"><span>Password</span><b>'+esc(ww.akun.password)+'</b></div><div class="meta" style="margin-top:8px">Simpan data ini. Jika lupa, Pengurus dapat melihat atau membuat password baru.</div><button class="btn-ghost" style="margin-top:10px" onclick="openGantiPasswordWarga()">🔑 Ubah Password Saya</button></div>' : '';
   const pengurusCard=bisaEdit ?
     '<div class="card"><h2>Menu Pengurus</h2><p style="font-size:12px;color:var(--muted);margin:0 0 10px">Kelola akun login warga, unduh rekap data keuangan, aspirasi, dan data warga.</p><button class="btn-primary" onclick="openAkunWarga()">👥 Kelola Akun Warga</button><button class="btn-ghost" style="margin-top:8px" onclick="downloadExcel()">⬇️ Download Data (Excel)</button></div>'
     +'<div class="card" style="border:1px solid var(--terra)"><h2 style="color:var(--terra)">⚠️ Zona Berbahaya</h2><p style="font-size:12px;color:var(--muted);margin:0 0 10px">Menghapus SEMUA data (kas, warga, pengumuman, berita, aspirasi, pengurus) dan mengembalikan aplikasi ke kondisi kosong seperti baru diinstal. Wajib verifikasi password &amp; foto wajah. Setiap penghapusan otomatis tercatat di riwayat (tersimpan 1 tahun).</p><button class="btn-ghost" style="border-color:var(--terra);color:var(--terra)" onclick="openResetVerifikasi()">🗑 Reset Data Aplikasi</button><button class="btn-ghost" style="margin-top:8px" onclick="openRiwayatHapus()">📜 Riwayat Penghapusan</button></div>' : '';
@@ -1105,12 +1173,43 @@ function renderProfil(){
   <div class="card">
     <div class="setting-row"><span>Mode gelap</span><button class="switch ${theme==='dark'?'on':''}" onclick="toggleTheme()"><i></i></button></div>
     <div class="setting-row"><span>Notifikasi tagihan</span><button class="switch ${localStorage.getItem('ais_tagihan_notif')!=='0'?'on':''}" onclick="toggleTagihanNotif()"><i></i></button></div>
+    <div class="setting-row"><span>Notifikasi info baru</span><button class="switch ${infoNotifOn()?'on':''}" onclick="toggleInfoNotif()"><i></i></button></div>
+    <button class="btn-ghost" style="margin-top:10px" onclick="mintaIzinNotifikasi()">🔔 Izinkan Notifikasi di HP Ini</button>
+    <p class="meta" style="margin-top:6px">Bunyi &amp; notifikasi muncul selama aplikasi ini terbuka. Untuk notifikasi saat aplikasi tertutup, perlu langkah tambahan — tanyakan ke pengembang.</p>
   </div>
   ${pengurusCard}
   <button class="btn-ghost" onclick="logout()">Keluar</button>
   <p style="text-align:center;color:var(--muted);font-size:10.5px;margin-top:22px">Versi 12.0 · mode lokal · Pengurus dapat melihat/reset akun warga</p>`;
 }
 
+function openGantiPasswordWarga(){
+  const w=warga.find(x=>x.no===session.rumah);
+  if(!w || !w.akun){ alert('Akun tidak ditemukan.'); return; }
+  openSheet(`<button class="close-x" onclick="closeSheet()">×</button>
+  <h3 style="margin:0 0 4px">Ubah Password Saya</h3>
+  <p class="meta" style="margin:0 0 12px">Username: <b>${esc(w.akun.username)}</b>. Pengurus tetap dapat melihat password baru ini lewat menu Kelola Akun Warga.</p>
+  <form id="fGantiPass">
+  <label style="font-size:11.5px;color:var(--muted)">Password Baru</label>
+  <input class="field" name="p1" type="password" minlength="4" required>
+  <label style="font-size:11.5px;color:var(--muted);margin-top:8px;display:block">Ulangi Password Baru</label>
+  <input class="field" name="p2" type="password" minlength="4" required>
+  <button class="btn-primary" type="submit" style="margin-top:12px">Simpan Password Baru</button>
+  <span id="gantiPassErr" style="color:var(--terra);font-size:12px;display:block;margin-top:8px"></span>
+  </form>`);
+  document.getElementById('fGantiPass').onsubmit=e=>{
+    e.preventDefault();
+    const fd=new FormData(e.target);
+    const p1=(fd.get('p1')||'').trim(), p2=(fd.get('p2')||'').trim();
+    const err=document.getElementById('gantiPassErr');
+    if(p1.length<4){ err.textContent='Password minimal 4 karakter.'; return; }
+    if(p1!==p2){ err.textContent='Password tidak sama, ketik ulang dengan benar.'; return; }
+    w.akun.password=p1;
+    saveData();
+    closeSheet();
+    renderProfil();
+    alert('Password berhasil diubah. Ingat baik-baik password barunya.');
+  };
+}
 let resetState={faceOk:false,photoData:''};
 let faceModelsLoaded=false;
 const FACE_MODEL_URL='https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model';
@@ -1367,6 +1466,7 @@ function toggleTagihanNotif(){localStorage.setItem('ais_tagihan_notif',localStor
 function toggleTheme(){theme=(theme==='dark'?'light':'dark');applyTheme();saveData();renderProfil();}
 function logout(){
   fbAuth.signOut().finally(()=>{ fbAuth.signInAnonymously().catch(()=>{}); });
+  try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
   session={name:'',rumah:'',role:'warga'};
   document.getElementById('loginUser').value='';
   document.getElementById('loginPass').value='';
