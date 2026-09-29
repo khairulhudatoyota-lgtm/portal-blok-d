@@ -551,9 +551,9 @@ function renderBeranda(){
   const totalUnit=allBlokCodes().length;
   const dihuni=warga.filter(w=>w.status==='dihuni').length;
   const belumDidata=Math.max(0,totalUnit-warga.length);
-  const saldo=keuangan.reduce((a,t)=>a+(t.jenis==='masuk'?t.jumlah:-t.jumlah),0);
-  const lunas=warga.filter(w=>w.iuran[3]==='lunas').length;
-  const list=[...keuangan].sort((a,b)=>b.tgl.localeCompare(a.tgl)).slice(0,6);
+  const saldo=keuangan.reduce((a,t)=>a+(t&&t.jenis==='masuk'?(t.jumlah||0):-(t&&t.jumlah||0)),0);
+  const lunas=warga.filter(w=>Array.isArray(w.iuran)&&w.iuran[3]==='lunas').length;
+  const list=[...keuangan].sort((a,b)=>(b.tgl||'').localeCompare(a.tgl||'')).slice(0,6);
   document.getElementById('tab-beranda').innerHTML=`
   <p style="margin:0 0 16px;color:var(--muted);font-size:13px">Selamat datang, <b style="color:var(--ink)">${esc(session.name)}</b> · Rumah ${esc(session.rumah)}</p>
   <div class="stat-row">
@@ -576,7 +576,7 @@ function renderBeranda(){
     </div>`;})()}
   </div>
   <div class="section-title">Iuran bulan ini</div>
-  <div class="card"><b style="font-size:20px">${lunas}/${warga.filter(w=>w.iuran[3]!=='-').length}</b> <span style="color:var(--muted);font-size:12px"> rumah sudah lunas</span></div>
+  <div class="card"><b style="font-size:20px">${lunas}/${warga.filter(w=>Array.isArray(w.iuran)&&w.iuran[3]!=='-').length}</b> <span style="color:var(--muted);font-size:12px"> rumah sudah lunas</span></div>
   <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
     <span>Riwayat kas</span>
     <div style="display:flex;align-items:center;gap:12px">
@@ -591,10 +591,10 @@ function renderBeranda(){
   <div class="card">${pengumuman.slice(0,2).map(p=>`<div class="item"><b>${esc(p.j)}</b><div class="meta">${p.tgl}</div></div>`).join('')||'<div class="empty">Belum ada pengumuman</div>'}</div>`;
 }
 function openRiwayatLengkap(){
-  const all=[...keuangan].sort((a,b)=>b.tgl.localeCompare(a.tgl));
+  const all=[...keuangan].sort((a,b)=>(b.tgl||'').localeCompare(a.tgl||''));
   let lastYear='';
   const rows=all.map(t=>{
-    const y=t.tgl.slice(0,4);
+    const y=(t.tgl||'-').slice(0,4);
     const heading=y!==lastYear?(lastYear=y,`<div style="font-size:11.5px;font-weight:700;color:var(--muted);margin:14px 0 6px 2px">${y}</div>`):'';
     return heading+`<div class="exp-item" onclick="openTransaksi('${t.id}')">
     <div><b style="font-size:13px">${esc(t.judul)}</b><div class="meta">${t.tgl} · klik untuk lihat detail</div></div>
@@ -1475,7 +1475,17 @@ function logout(){
   document.getElementById('login').classList.remove('hide');
 }
 
-function renderAll(){renderBeranda();renderIuran();renderInfo();renderWarga();renderNotifikasi();renderProfil();updateNotifBadge();saveData();}
+function renderAll(){
+  const aman=(fn,label)=>{ try{ fn(); }catch(e){ console.error('Gagal memuat bagian '+label+':', e); } };
+  aman(renderBeranda,'Beranda');
+  aman(renderIuran,'Iuran');
+  aman(renderInfo,'Info');
+  aman(renderWarga,'Warga');
+  aman(renderNotifikasi,'Notifikasi');
+  aman(renderProfil,'Profil');
+  aman(updateNotifBadge,'Badge');
+  saveData();
+}
 
 /* ---------------- notifikasi (khusus pengurus) ---------------- */
 function updateNotifBadge(){
