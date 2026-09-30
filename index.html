@@ -287,9 +287,13 @@ const SESSION_KEY = 'ais_session_v1';
 const STATE_DOC = fbDb.collection('state').doc('main');
 let remoteApplyGuard = false;
 let pushTimer = null;
+let authReadyResolve;
+const authReadyPromise = new Promise(res=>{ authReadyResolve=res; });
+let authResolved = false;
 
 fbAuth.onAuthStateChanged(user=>{
-  if(!user){ fbAuth.signInAnonymously().catch(e=>console.warn('Gagal masuk anonim:', e)); }
+  if(!user){ fbAuth.signInAnonymously().catch(e=>console.warn('Gagal masuk anonim:', e)); return; }
+  if(!authResolved){ authResolved=true; authReadyResolve(user); }
 });
 
 function applyLoadedBlob(d){
@@ -370,9 +374,11 @@ function pushToFirestore(){
   clearTimeout(pushTimer);
   pushTimer=setTimeout(()=>{
     const payload=JSON.parse(JSON.stringify({keuangan,pengumuman,berita,aspirasi,warga,notifikasi,pengurusList,theme,updatedAt:new Date().toISOString()}));
-    STATE_DOC.set(payload).catch(err=>{
-      console.warn('Gagal simpan online:', err);
-      alert('Gagal menyimpan ke server online: '+err.message+'\nData sementara hanya tersimpan di HP ini.');
+    authReadyPromise.then(()=>{
+      STATE_DOC.set(payload).catch(err=>{
+        console.warn('Gagal simpan online:', err);
+        alert('Gagal menyimpan ke server online: '+err.message+'\nData sementara hanya tersimpan di HP ini.');
+      });
     });
   }, 400);
 }
