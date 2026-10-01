@@ -370,10 +370,13 @@ function startRealtimeSync(){
     const s=document.getElementById('statusLine'); if(s) s.textContent='⚠️ Tidak tersambung ke server: '+err.message;
   });
 }
+function buildStatePayload(){
+  return JSON.parse(JSON.stringify({keuangan,pengumuman,berita,aspirasi,warga,notifikasi,pengurusList,theme,updatedAt:new Date().toISOString()}));
+}
 function pushToFirestore(){
   clearTimeout(pushTimer);
   pushTimer=setTimeout(()=>{
-    const payload=JSON.parse(JSON.stringify({keuangan,pengumuman,berita,aspirasi,warga,notifikasi,pengurusList,theme,updatedAt:new Date().toISOString()}));
+    const payload=buildStatePayload();
     authReadyPromise.then(()=>{
       STATE_DOC.set(payload).catch(err=>{
         console.warn('Gagal simpan online:', err);
@@ -381,6 +384,13 @@ function pushToFirestore(){
       });
     });
   }, 400);
+}
+// Dipakai untuk aksi penting (mis. ganti password) yang perlu kepastian
+// berhasil/gagal tersimpan ke server sebelum memberi tahu pengguna.
+function pushToFirestoreNow(){
+  clearTimeout(pushTimer);
+  const payload=buildStatePayload();
+  return authReadyPromise.then(()=>STATE_DOC.set(payload));
 }
 
 /* ---------------- penyimpanan & helper keamanan V12 ---------------- */
@@ -420,6 +430,13 @@ document.getElementById('pickPengurus').onclick=()=>selRole('pengurus');
 function selRole(r){session.role=r;document.getElementById('pickWarga').classList.toggle('sel',r==='warga');document.getElementById('pickPengurus').classList.toggle('sel',r==='pengurus');}
 function togglePassVisibility(){
   const f=document.getElementById('loginPass');
+  const btn=event.currentTarget;
+  const show=f.type==='password';
+  f.type=show?'text':'password';
+  btn.textContent=show?'🙈':'👁';
+}
+function toggleFieldVisibility(id){
+  const f=document.getElementById(id);
   const btn=event.currentTarget;
   const show=f.type==='password';
   f.type=show?'text':'password';
@@ -1196,24 +1213,41 @@ function openGantiPasswordWarga(){
   <p class="meta" style="margin:0 0 12px">Username: <b>${esc(w.akun.username)}</b>. Pengurus tetap dapat melihat password baru ini lewat menu Kelola Akun Warga.</p>
   <form id="fGantiPass">
   <label style="font-size:11.5px;color:var(--muted)">Password Baru</label>
-  <input class="field" name="p1" type="password" minlength="4" required>
+  <div style="position:relative">
+    <input class="field" id="gantiP1" name="p1" type="password" minlength="4" required style="padding-right:42px">
+    <button type="button" onclick="toggleFieldVisibility('gantiP1')" style="position:absolute;right:2px;top:0;height:100%;width:38px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px">👁</button>
+  </div>
   <label style="font-size:11.5px;color:var(--muted);margin-top:8px;display:block">Ulangi Password Baru</label>
-  <input class="field" name="p2" type="password" minlength="4" required>
+  <div style="position:relative">
+    <input class="field" id="gantiP2" name="p2" type="password" minlength="4" required style="padding-right:42px">
+    <button type="button" onclick="toggleFieldVisibility('gantiP2')" style="position:absolute;right:2px;top:0;height:100%;width:38px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px">👁</button>
+  </div>
   <button class="btn-primary" type="submit" style="margin-top:12px">Simpan Password Baru</button>
   <span id="gantiPassErr" style="color:var(--terra);font-size:12px;display:block;margin-top:8px"></span>
   </form>`);
-  document.getElementById('fGantiPass').onsubmit=e=>{
+  document.getElementById('fGantiPass').onsubmit=async e=>{
     e.preventDefault();
     const fd=new FormData(e.target);
     const p1=(fd.get('p1')||'').trim(), p2=(fd.get('p2')||'').trim();
     const err=document.getElementById('gantiPassErr');
+    err.textContent='';
     if(p1.length<4){ err.textContent='Password minimal 4 karakter.'; return; }
     if(p1!==p2){ err.textContent='Password tidak sama, ketik ulang dengan benar.'; return; }
+    const btn=e.target.querySelector('button[type="submit"]');
+    const oldPass=w.akun.password;
+    btn.disabled=true; btn.textContent='Menyimpan…';
     w.akun.password=p1;
-    saveData();
-    closeSheet();
-    renderProfil();
-    alert('Password berhasil diubah. Ingat baik-baik password barunya.');
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({keuangan,pengumuman,berita,aspirasi,warga,notifikasi,pengurusList,theme,version:13})); }catch(ex){}
+    try{
+      await pushToFirestoreNow();
+      closeSheet();
+      renderProfil();
+      alert('Password berhasil diubah dan sudah tersimpan di server. Ingat baik-baik password barunya.');
+    }catch(ex){
+      w.akun.password=oldPass; // batalkan, supaya tidak beda dengan yang ada di server
+      btn.disabled=false; btn.textContent='Simpan Password Baru';
+      err.textContent='Gagal tersimpan ke server ('+ex.message+'). Password TIDAK berubah — pastikan internet stabil, lalu coba lagi.';
+    }
   };
 }
 let resetState={faceOk:false,photoData:''};
