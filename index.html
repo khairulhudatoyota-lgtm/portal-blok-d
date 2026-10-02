@@ -287,14 +287,28 @@ const SESSION_KEY = 'ais_session_v1';
 const STATE_DOC = fbDb.collection('state').doc('main');
 let remoteApplyGuard = false;
 let pushTimer = null;
-let authReadyResolve;
-const authReadyPromise = new Promise(res=>{ authReadyResolve=res; });
-let authResolved = false;
 
 fbAuth.onAuthStateChanged(user=>{
-  if(!user){ fbAuth.signInAnonymously().catch(e=>console.warn('Gagal masuk anonim:', e)); return; }
-  if(!authResolved){ authResolved=true; authReadyResolve(user); }
+  if(!user){ fbAuth.signInAnonymously().catch(e=>console.warn('Gagal masuk anonim:', e)); }
 });
+// Memastikan sudah "masuk" ke server sebelum menyimpan, dengan percobaan ulang
+// dan batas waktu — supaya tidak macet selamanya kalau sempat gagal sekali.
+function ensureSignedIn(){
+  if(fbAuth.currentUser) return Promise.resolve(fbAuth.currentUser);
+  return new Promise((resolve,reject)=>{
+    let selesai=false;
+    const unsub=fbAuth.onAuthStateChanged(user=>{
+      if(user && !selesai){ selesai=true; unsub(); resolve(user); }
+    });
+    fbAuth.signInAnonymously().catch(e=>console.warn('Percobaan masuk anonim gagal:', e));
+    setTimeout(()=>{
+      if(!selesai){
+        selesai=true; unsub();
+        reject(new Error('Koneksi ke server lambat/gagal. Periksa internet lalu coba lagi.'));
+      }
+    }, 12000);
+  });
+}
 
 function applyLoadedBlob(d){
   if(Array.isArray(d.keuangan))keuangan=d.keuangan;
@@ -377,11 +391,14 @@ function pushToFirestore(){
   clearTimeout(pushTimer);
   pushTimer=setTimeout(()=>{
     const payload=buildStatePayload();
-    authReadyPromise.then(()=>{
+    ensureSignedIn().then(()=>{
       STATE_DOC.set(payload).catch(err=>{
         console.warn('Gagal simpan online:', err);
         alert('Gagal menyimpan ke server online: '+err.message+'\nData sementara hanya tersimpan di HP ini.');
       });
+    }).catch(err=>{
+      console.warn('Gagal simpan online (tidak bisa masuk):', err);
+      alert('Gagal menyimpan ke server online: '+err.message+'\nData sementara hanya tersimpan di HP ini.');
     });
   }, 400);
 }
@@ -390,7 +407,7 @@ function pushToFirestore(){
 function pushToFirestoreNow(){
   clearTimeout(pushTimer);
   const payload=buildStatePayload();
-  return authReadyPromise.then(()=>STATE_DOC.set(payload));
+  return ensureSignedIn().then(()=>STATE_DOC.set(payload));
 }
 
 /* ---------------- penyimpanan & helper keamanan V12 ---------------- */
