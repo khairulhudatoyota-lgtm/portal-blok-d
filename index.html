@@ -387,17 +387,25 @@ function startRealtimeSync(){
 function buildStatePayload(){
   return JSON.parse(JSON.stringify({keuangan,pengumuman,berita,aspirasi,warga,notifikasi,pengurusList,theme,updatedAt:new Date().toISOString()}));
 }
+// Firestore bisa menggantung tanpa batas kalau koneksi terputus-sambung
+// (HP menunjukkan sinyal tapi sebenarnya tidak ada jalur internet yang jalan).
+// withTimeout memastikan proses ini selalu berhenti sendiri, tidak macet selamanya.
+function withTimeout(promise, ms, pesan){
+  return new Promise((resolve,reject)=>{
+    let selesai=false;
+    const t=setTimeout(()=>{ if(!selesai){ selesai=true; reject(new Error(pesan)); } }, ms);
+    promise.then(v=>{ if(!selesai){ selesai=true; clearTimeout(t); resolve(v); } },
+                 e=>{ if(!selesai){ selesai=true; clearTimeout(t); reject(e); } });
+  });
+}
 function pushToFirestore(){
   clearTimeout(pushTimer);
   pushTimer=setTimeout(()=>{
     const payload=buildStatePayload();
     ensureSignedIn().then(()=>{
-      STATE_DOC.set(payload).catch(err=>{
-        console.warn('Gagal simpan online:', err);
-        alert('Gagal menyimpan ke server online: '+err.message+'\nData sementara hanya tersimpan di HP ini.');
-      });
+      return withTimeout(STATE_DOC.set(payload), 12000, 'Koneksi ke server lambat/gagal saat menyimpan.');
     }).catch(err=>{
-      console.warn('Gagal simpan online (tidak bisa masuk):', err);
+      console.warn('Gagal simpan online:', err);
       alert('Gagal menyimpan ke server online: '+err.message+'\nData sementara hanya tersimpan di HP ini.');
     });
   }, 400);
@@ -407,7 +415,7 @@ function pushToFirestore(){
 function pushToFirestoreNow(){
   clearTimeout(pushTimer);
   const payload=buildStatePayload();
-  return ensureSignedIn().then(()=>STATE_DOC.set(payload));
+  return ensureSignedIn().then(()=>withTimeout(STATE_DOC.set(payload), 12000, 'Koneksi ke server lambat/gagal saat menyimpan. Periksa internet lalu coba lagi.'));
 }
 
 /* ---------------- penyimpanan & helper keamanan V12 ---------------- */
